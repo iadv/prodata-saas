@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// check if the POSTGRES_URL environment variable is set
+// Check if the POSTGRES_URL environment variable is set
 if (!process.env.NEXT_PUBLIC_POSTGRES_URL) {
   throw new Error('POSTGRES_URL environment variable is not set');
 }
@@ -20,8 +20,8 @@ if (!DATABASE_URL) {
 const sql = neon(DATABASE_URL);
 
 interface ColumnInfo {
-  originalName: string; // original header from CSV
-  name: string;         // sanitized name used in the DB
+  originalName: string; // Original header from CSV
+  name: string;         // Sanitized name used in the DB
   type: string;
   nullable: boolean;
 }
@@ -36,7 +36,7 @@ function sanitizeColumnName(name: string): string {
 function inferColumnType(values: any[]): string {
   // Remove null/undefined/empty values for type inference
   const nonNullValues = values.filter(v => v !== null && v !== undefined && v !== '');
-  
+
   if (nonNullValues.length === 0) {
     return 'text';
   }
@@ -66,7 +66,7 @@ async function createTableFromData(
   updateStatus: (message: string) => void
 ): Promise<void> {
   updateStatus(`Creating table: ${tableName}`);
-  
+
   try {
     // Create table
     const columnDefinitions = columns
@@ -87,21 +87,21 @@ async function createTableFromData(
     // Insert data in batches
     const batchSize = 100;
     const totalBatches = Math.ceil(data.length / batchSize);
-    
+
     for (let i = 0; i < data.length; i += batchSize) {
       const batch = data.slice(i, i + batchSize);
       const currentBatch = Math.floor(i / batchSize) + 1;
-      
+
       updateStatus(`Inserting batch ${currentBatch}/${totalBatches} for ${tableName}`);
-      
+
       if (batch.length === 0) continue;
 
-      const placeholders = batch.map((_, rowIndex) => 
+      const placeholders = batch.map((_, rowIndex) =>
         `(${columns.map((_, colIndex) => `$${rowIndex * columns.length + colIndex + 1}`).join(', ')})`
       ).join(', ');
 
       // Use the original CSV header (col.originalName) to fetch values from the row
-      const values = batch.flatMap(row => 
+      const values = batch.flatMap((row: Record<string, any>) =>
         columns.map(col => {
           const value = row[col.originalName];
           if (value === null || value === undefined || value === '') {
@@ -128,7 +128,7 @@ async function createTableFromData(
 
       await sql(insertQuery, values);
     }
-    
+
     updateStatus(`Completed processing ${tableName}`);
   } catch (error) {
     console.error('Database error:', error);
@@ -142,7 +142,7 @@ async function processCSVFile(
   updateStatus: (message: string) => void
 ): Promise<void> {
   updateStatus(`Reading CSV file: ${file.name}`);
-  
+
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
       header: true,
@@ -165,16 +165,15 @@ async function processCSVFile(
             .toLowerCase()
             .replace('.csv', '')
             .replace(/[^a-z0-9_]/g, '_');
-          
+
           updateStatus(`Inferring column types for ${file.name}`);
-          
+
           // Assuming 'results.data' is an array of objects with a known structure
           const firstRow = results.data[0] as Record<string, any>; // Assert the type
 
           // Get all column names from the first row (original headers)
           const columnNames = Object.keys(firstRow);
-      
-          
+
           // Build columns array with both original and sanitized names
           const columns: ColumnInfo[] = columnNames.map(key => {
             const sanitized = sanitizeColumnName(key);
@@ -197,6 +196,11 @@ async function processCSVFile(
         }
       },
       error: (error) => {
-        console.error
-::contentReference[oaicite:2]{index=2}
+        console.error(`CSV parsing error for ${file.name}:`, error);
+        reject(new Error(`CSV parsing error: ${error.message}`));
+      }
+    });
+  });
+
+::contentReference[oaicite:0]{index=0}
  
