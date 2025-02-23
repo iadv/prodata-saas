@@ -60,6 +60,7 @@
     "dotenv": "^16.4.7",
     "drizzle-kit": "^0.30.4",
     "drizzle-orm": "^0.39.1",
+    "embla-carousel-react": "^8.5.2",
     "eslint": "9.16.0",
     "eslint-config-next": "15.1.0",
     "framer-motion": "^11.14.1",
