@@ -202,3 +202,5 @@ async function processCSVFile(
     });
   });
 }
+
+export { processCSVFile };
