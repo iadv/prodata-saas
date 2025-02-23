@@ -168,19 +168,22 @@ async function processFiles(
 
           updateStatus(`Inferring column types for ${file.name}`);
 
-          // Assuming 'results.data' is an array of objects with a known structure
-          const firstRow = results.data[0] as Record<string, any>; // Assert the type
+          // Assert that results.data is an array of records
+          const firstRow = (results.data as Record<string, any>[])[0];
 
           // Get all column names from the first row (original headers)
           const columnNames = Object.keys(firstRow);
 
-          // Build columns array with both original and sanitized names
+          // Build columns array with both original and sanitized names.
+          // Inline cast results.data to Record<string, any>[] for type-safe mapping.
           const columns: ColumnInfo[] = columnNames.map(key => {
             const sanitized = sanitizeColumnName(key);
             return {
               originalName: key,
               name: sanitized,
-              type: inferColumnType(results.data.map((row: Record<string, any>) => row[key])),
+              type: inferColumnType(
+                (results.data as Record<string, any>[]).map((row) => row[key])
+              ),
               nullable: true
             };
           });
