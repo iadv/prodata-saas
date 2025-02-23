@@ -63,9 +63,9 @@ export default function UploadPage() {
     setStatus('Initializing...');
   
     try {
-      // Process files one by one
+      // Process each file individually
       for (const file of files) {
-        await processFiles([file], (progress) => {
+        await processFiles(file, (progress) => {
           setProgress(progress);
         }, (message) => {
           setStatus(message);
@@ -90,6 +90,7 @@ export default function UploadPage() {
       setProcessing(false);
     }
   };
+  
 
   return (
     <div className="container mx-auto px-4 py-8">
