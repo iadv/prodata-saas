@@ -57,23 +57,26 @@ export default function UploadPage() {
       });
       return;
     }
-
+  
     setProcessing(true);
     setProgress(0);
     setStatus('Initializing...');
-
+  
     try {
-      await processFiles(files, (progress) => {
-        setProgress(progress);
-      }, (message) => {
-        setStatus(message);
-      });
-
+      // Process files one by one
+      for (const file of files) {
+        await processFiles([file], (progress) => {
+          setProgress(progress);
+        }, (message) => {
+          setStatus(message);
+        });
+      }
+  
       toast({
         title: "Success",
         description: "Files processed and tables created successfully",
       });
-
+  
       resetForm();
     } catch (error) {
       console.error('Upload error:', error);
