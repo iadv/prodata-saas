@@ -136,7 +136,7 @@ async function createTableFromData(
   }
 }
 
-async function processCSVFile(
+async function processFiles(
   file: File,
   updateProgress: (progress: number) => void,
   updateStatus: (message: string) => void
@@ -203,4 +203,4 @@ async function processCSVFile(
   });
 }
 
-export { processCSVFile };
+export { processFiles };
