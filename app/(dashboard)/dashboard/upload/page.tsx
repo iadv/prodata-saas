@@ -149,7 +149,7 @@ export default function UploadPage() {
             </div>
           )}
 
-          <Alert variant="info" className="bg-blue-50">
+          <Alert variant="default" className="bg-blue-50">
             <AlertCircle className="h-4 w-4" />
             <span className="ml-2">
               Make sure your CSV files have consistent headers and data types.
