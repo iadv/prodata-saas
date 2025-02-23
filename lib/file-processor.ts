@@ -181,7 +181,7 @@ async function processCSVFile(
             return {
               originalName: key,
               name: sanitized,
-              type: inferColumnType(results.data.map(row => row[key])),
+              type: inferColumnType(results.data.map((row: Record<string, any>) => row[key])),
               nullable: true
             };
           });
@@ -197,67 +197,6 @@ async function processCSVFile(
         }
       },
       error: (error) => {
-        console.error(`CSV parsing error for ${file.name}:`, error);
-        reject(new Error(`CSV parsing error: ${error.message}`));
-      }
-    });
-  });
-}
-
-async function processPDFFile(
-  file: File,
-  updateProgress: (progress: number) => void,
-  updateStatus: (message: string) => void
-): Promise<void> {
-  updateStatus('PDF processing not implemented yet');
-  throw new Error('PDF processing not implemented yet');
-}
-
-export async function processFiles(
-  files: File[],
-  updateProgress: (progress: number) => void,
-  updateStatus: (message: string) => void
-): Promise<void> {
-  updateStatus('Initializing file processing');
-
-  const totalFiles = files.length;
-  let processedFiles = 0;
-
-  try {
-    // Test database connection before processing
-    updateStatus('Testing database connection');
-    await sql`SELECT 1`;
-    updateStatus('Database connection successful');
-
-    for (const file of files) {
-      try {
-        updateStatus(`Processing file ${processedFiles + 1}/${totalFiles}: ${file.name}`);
-        
-        if (file.type === 'text/csv') {
-          await processCSVFile(file, (fileProgress) => {
-            const overallProgress = Math.round(
-              ((processedFiles + fileProgress / 100) / totalFiles) * 100
-            );
-            updateProgress(overallProgress);
-          }, updateStatus);
-        } else if (file.type === 'application/pdf') {
-          await processPDFFile(file, (fileProgress) => {
-            const overallProgress = Math.round(
-              ((processedFiles + fileProgress / 100) / totalFiles) * 100
-            );
-            updateProgress(overallProgress);
-          }, updateStatus);
-        }
-        processedFiles++;
-      } catch (error) {
-        console.error(`Error processing file ${file.name}:`, error);
-        throw new Error(`Error processing ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      }
-    }
-    
-    updateStatus('All files processed successfully');
-  } catch (error) {
-    console.error('Fatal error during file processing:', error);
-    throw error;
-  }
-}
+        console.error
+::contentReference[oaicite:2]{index=2}
+ 
