@@ -1,20 +1,25 @@
-import { compare, hash } from 'bcryptjs';
+import { randomBytes, scryptSync, timingSafeEqual } from 'crypto';
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { NewUser } from '@/lib/db/schema';
 
 const key = new TextEncoder().encode(process.env.AUTH_SECRET);
-const SALT_ROUNDS = 10;
+const SALT_LENGTH = 16;
+const KEY_LENGTH = 32;
+const ITERATIONS = 100000;
+const DIGEST = 'sha256';
 
-export async function hashPassword(password: string) {
-  return hash(password, SALT_ROUNDS);
+export function hashPassword(password: string): string {
+  const salt = randomBytes(SALT_LENGTH).toString('hex');
+  const derivedKey = scryptSync(password, salt, KEY_LENGTH, { N: ITERATIONS, r: 8, p: 1 });
+  return `${salt}:${derivedKey.toString('hex')}`;
 }
 
-export async function comparePasswords(
-  plainTextPassword: string,
-  hashedPassword: string
-) {
-  return compare(plainTextPassword, hashedPassword);
+export function comparePasswords(plainTextPassword: string, hashedPassword: string): boolean {
+  const [salt, storedHash] = hashedPassword.split(':');
+  const derivedKey = scryptSync(plainTextPassword, salt, KEY_LENGTH, { N: ITERATIONS, r: 8, p: 1 });
+  const storedHashBuffer = Buffer.from(storedHash, 'hex');
+  return timingSafeEqual(derivedKey, storedHashBuffer);
 }
 
 type SessionData = {
@@ -22,7 +27,7 @@ type SessionData = {
   expires: string;
 };
 
-export async function signToken(payload: SessionData) {
+export async function signToken(payload: SessionData): Promise<string> {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -30,7 +35,7 @@ export async function signToken(payload: SessionData) {
     .sign(key);
 }
 
-export async function verifyToken(input: string) {
+export async function verifyToken(input: string): Promise<SessionData> {
   const { payload } = await jwtVerify(input, key, {
     algorithms: ['HS256'],
   });
