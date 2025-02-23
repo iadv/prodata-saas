@@ -1,4 +1,3 @@
-import { randomBytes, scryptSync, timingSafeEqual } from 'crypto';
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { NewUser } from '@/lib/db/schema';
@@ -7,19 +6,20 @@ const key = new TextEncoder().encode(process.env.AUTH_SECRET);
 const SALT_LENGTH = 16;
 const KEY_LENGTH = 32;
 const ITERATIONS = 100000;
-const DIGEST = 'sha256';
+const DIGEST = 'SHA-256';
 
 export function hashPassword(password: string): string {
-  const salt = randomBytes(SALT_LENGTH).toString('hex');
+  const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
   const derivedKey = scryptSync(password, salt, KEY_LENGTH, { N: ITERATIONS, r: 8, p: 1 });
-  return `${salt}:${derivedKey.toString('hex')}`;
+  return `${Buffer.from(salt).toString('hex')}:${Buffer.from(derivedKey).toString('hex')}`;
 }
 
 export function comparePasswords(plainTextPassword: string, hashedPassword: string): boolean {
-  const [salt, storedHash] = hashedPassword.split(':');
+  const [saltHex, storedHashHex] = hashedPassword.split(':');
+  const salt = Buffer.from(saltHex, 'hex');
+  const storedHash = Buffer.from(storedHashHex, 'hex');
   const derivedKey = scryptSync(plainTextPassword, salt, KEY_LENGTH, { N: ITERATIONS, r: 8, p: 1 });
-  const storedHashBuffer = Buffer.from(storedHash, 'hex');
-  return timingSafeEqual(derivedKey, storedHashBuffer);
+  return timingSafeEqual(derivedKey, storedHash);
 }
 
 type SessionData = {
