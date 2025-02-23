@@ -8,18 +8,42 @@ const KEY_LENGTH = 32;
 const ITERATIONS = 100000;
 const DIGEST = 'SHA-256';
 
-export function hashPassword(password: string): string {
+export async function hashPassword(password: string): Promise<string> {
   const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
-  const derivedKey = scryptSync(password, salt, KEY_LENGTH, { N: ITERATIONS, r: 8, p: 1 });
-  return `${Buffer.from(salt).toString('hex')}:${Buffer.from(derivedKey).toString('hex')}`;
+  const encoder = new TextEncoder();
+  const passwordBuffer = encoder.encode(password);
+  const derivedKey = await crypto.subtle.importKey(
+    'raw',
+    passwordBuffer,
+    { name: 'PBKDF2' },
+    false,
+    ['deriveBits']
+  ).then(key => crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations: ITERATIONS, hash: DIGEST },
+    key,
+    KEY_LENGTH * 8
+  ));
+  return `${Buffer.from(salt).toString('hex')}:${Buffer.from(new Uint8Array(derivedKey)).toString('hex')}`;
 }
 
-export function comparePasswords(plainTextPassword: string, hashedPassword: string): boolean {
+export async function comparePasswords(plainTextPassword: string, hashedPassword: string): Promise<boolean> {
   const [saltHex, storedHashHex] = hashedPassword.split(':');
   const salt = Buffer.from(saltHex, 'hex');
   const storedHash = Buffer.from(storedHashHex, 'hex');
-  const derivedKey = scryptSync(plainTextPassword, salt, KEY_LENGTH, { N: ITERATIONS, r: 8, p: 1 });
-  return timingSafeEqual(derivedKey, storedHash);
+  const encoder = new TextEncoder();
+  const passwordBuffer = encoder.encode(plainTextPassword);
+  const derivedKey = await crypto.subtle.importKey(
+    'raw',
+    passwordBuffer,
+    { name: 'PBKDF2' },
+    false,
+    ['deriveBits']
+  ).then(key => crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations: ITERATIONS, hash: DIGEST },
+    key,
+    KEY_LENGTH * 8
+  ));
+  return timingSafeEqual(new Uint8Array(derivedKey), storedHash);
 }
 
 type SessionData = {
