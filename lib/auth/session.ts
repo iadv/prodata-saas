@@ -86,3 +86,15 @@ export async function setSession(user: NewUser) {
     sameSite: 'lax',
   });
 }
+
+async function timingSafeEqual(a: Uint8Array, b: Uint8Array): Promise<boolean> {
+  if (a.length !== b.length) {
+    return false;
+  }
+  const result = new Uint8Array(a.length);
+  for (let i = 0; i < a.length; i++) {
+    result[i] = a[i] ^ b[i];
+  }
+  // Use a constant-time comparison to prevent timing attacks
+  return result.reduce((acc, val) => acc | val, 0) === 0;
+}
