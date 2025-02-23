@@ -168,8 +168,12 @@ async function processCSVFile(
           
           updateStatus(`Inferring column types for ${file.name}`);
           
+          // Assuming 'results.data' is an array of objects with a known structure
+          const firstRow = results.data[0] as Record<string, any>; // Assert the type
+
           // Get all column names from the first row (original headers)
-          const columnNames = Object.keys(results.data[0]);
+          const columnNames = Object.keys(firstRow);
+      
           
           // Build columns array with both original and sanitized names
           const columns: ColumnInfo[] = columnNames.map(key => {
