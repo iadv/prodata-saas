@@ -32,7 +32,7 @@ function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <Link href="/" className="flex items-center">
           <CircleIcon className="h-6 w-6 text-orange-500" />
-          <span className="ml-2 text-xl font-semibold text-gray-900">ACME</span>
+          <span className="ml-2 text-xl font-semibold text-gray-900">Prodata AI</span>
         </Link>
         <div className="flex items-center space-x-4">
           <Link
@@ -76,7 +76,7 @@ function Header() {
               asChild
               className="bg-black hover:bg-gray-800 text-white text-sm px-4 py-2 rounded-full"
             >
-              <Link href="/sign-up">Sign Up</Link>
+              <Link href="/sign-up">Sign In / Sign Up</Link>
             </Button>
           )}
         </div>

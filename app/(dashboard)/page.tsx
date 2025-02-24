@@ -10,21 +10,20 @@ export default function HomePage() {
           <div className="lg:grid lg:grid-cols-12 lg:gap-8">
             <div className="sm:text-center md:max-w-2xl md:mx-auto lg:col-span-6 lg:text-left">
               <h1 className="text-4xl font-bold text-gray-900 tracking-tight sm:text-5xl md:text-6xl">
-                Build Your SaaS
-                <span className="block text-orange-500">Faster Than Ever</span>
+              Accelerate Data-Driven Decisions
+                <span className="block text-orange-500">Insights. Faster than ever!</span>
               </h1>
               <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-xl lg:text-lg xl:text-xl">
-                Launch your SaaS product in record time with our powerful,
-                ready-to-use template. Packed with modern technologies and
-                essential integrations.
+              Seamlessly integrate your operational and manufacturing data for rapid, natural language analytics and reporting. 
+              We offer custom database integrations, Gen AI solutions, and actionable insights to drive informed decisions.
               </p>
               <div className="mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0">
                 <a
-                  href="https://vercel.com/templates/next.js/next-js-saas-starter"
+                  href="https://saas-starter-prodata-oiz6oc02y-iadvs-projects.vercel.app/sign-up"
                   target="_blank"
                 >
                   <Button className="bg-white hover:bg-gray-100 text-black border border-gray-200 rounded-full text-lg px-8 py-4 inline-flex items-center justify-center">
-                    Deploy your own
+                    Try it now
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </a>
@@ -51,11 +50,11 @@ export default function HomePage() {
               </div>
               <div className="mt-5">
                 <h2 className="text-lg font-medium text-gray-900">
-                  Next.js and React
+                  Instant Insights & AI-Powered Accuracy
                 </h2>
                 <p className="mt-2 text-base text-gray-500">
-                  Leverage the power of modern web technologies for optimal
-                  performance and developer experience.
+                  Unlock real-time insights with tailored AI solutions that understand 
+                  your data and business logic, ensuring precision at every step.
                 </p>
               </div>
             </div>
@@ -66,11 +65,11 @@ export default function HomePage() {
               </div>
               <div className="mt-5">
                 <h2 className="text-lg font-medium text-gray-900">
-                  Postgres and Drizzle ORM
+                  Automated Workflows & Time Savings
                 </h2>
                 <p className="mt-2 text-base text-gray-500">
-                  Robust database solution with an intuitive ORM for efficient
-                  data management and scalability.
+                Streamline operations with automated workflows for reporting, 
+                anomaly detection, and analysis, freeing up valuable time to maximize ROI.
                 </p>
               </div>
             </div>
@@ -81,11 +80,11 @@ export default function HomePage() {
               </div>
               <div className="mt-5">
                 <h2 className="text-lg font-medium text-gray-900">
-                  Stripe Integration
+                  Data Security & Customization
                 </h2>
                 <p className="mt-2 text-base text-gray-500">
-                  Seamless payment processing and subscription management with
-                  industry-leading Stripe integration.
+                Rest assured your data is secure, whether on AWS, Azure, or on-premise. 
+                We customize AI solutions to fit your unique needs and ensure seamless integration.
                 </p>
               </div>
             </div>
@@ -98,17 +97,16 @@ export default function HomePage() {
           <div className="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
             <div>
               <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
-                Ready to launch your SaaS?
+                Ready to supercharge your AI-driven insights?
               </h2>
               <p className="mt-3 max-w-3xl text-lg text-gray-500">
-                Our template provides everything you need to get your SaaS up
-                and running quickly. Don't waste time on boilerplate - focus on
-                what makes your product unique.
+                Seamlessly connect to your databases and systems (e.g., SAP, Tableau, quality and maintenance systems, machines, proprietary databases). 
+                Skip the hassle—focus on unlocking insights and driving impact.
               </p>
             </div>
             <div className="mt-8 lg:mt-0 flex justify-center lg:justify-end">
               <a
-                href="https://github.com/nextjs/saas-starter"
+                href="https://saas-starter-prodata-oiz6oc02y-iadvs-projects.vercel.app/sign-up"
                 target="_blank"
               >
                 <Button className="bg-white hover:bg-gray-100 text-black border border-gray-200 rounded-full text-xl px-12 py-6 inline-flex items-center justify-center">

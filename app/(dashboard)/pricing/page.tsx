@@ -13,7 +13,7 @@ export default async function PricingPage() {
   ]);
 
   const basePlan = products.find((product) => product.name === 'Base');
-  const plusPlan = products.find((product) => product.name === 'Plus');
+  const plusPlan = products.find((product) => product.name === 'Enterprise');
 
   const basePrice = prices.find((price) => price.productId === basePlan?.id);
   const plusPrice = prices.find((price) => price.productId === plusPlan?.id);
@@ -27,8 +27,8 @@ export default async function PricingPage() {
           interval={basePrice?.interval || 'month'}
           trialDays={basePrice?.trialPeriodDays || 7}
           features={[
-            'Unlimited Usage',
-            'Unlimited Workspace Members',
+            'Unlimited Queries',
+            'Upto 5 Workspace Members',
             'Email Support',
           ]}
           priceId={basePrice?.id}
@@ -40,7 +40,8 @@ export default async function PricingPage() {
           trialDays={plusPrice?.trialPeriodDays || 7}
           features={[
             'Everything in Base, and:',
-            'Early Access to New Features',
+            'Custom Integrations (e.g., SAP, Tableau, Oracle)',
+            'Advanced analytics and reporting',
             '24/7 Support + Slack Access',
           ]}
           priceId={plusPrice?.id}
@@ -69,7 +70,8 @@ function PricingCard({
     <div className="pt-6">
       <h2 className="text-2xl font-medium text-gray-900 mb-2">{name}</h2>
       <p className="text-sm text-gray-600 mb-4">
-        with {trialDays} day free trial
+        // with {trialDays} day free trial
+        // with 30 days free trial
       </p>
       <p className="text-4xl font-medium text-gray-900 mb-6">
         ${price / 100}{' '}
