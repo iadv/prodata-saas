@@ -110,7 +110,7 @@ export default function HomePage() {
                 target="_blank"
               >
                 <Button className="bg-white hover:bg-gray-100 text-black border border-gray-200 rounded-full text-xl px-12 py-6 inline-flex items-center justify-center">
-                  View the code
+                  Try it now
                   <ArrowRight className="ml-3 h-6 w-6" />
                 </Button>
               </a>
