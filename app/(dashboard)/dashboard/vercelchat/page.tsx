@@ -236,11 +236,19 @@ export default function Page() {
       // console.log("Selected Tables String:", selectedTablesString);
       // console.log("Context Columns String:", selectedTableColumnsPromises);
 
+      if (typeof query !== 'string') {
+        // Handle the error appropriately
+        toast.error("An error occurred while generating the query.");
+        setLoading(false);
+        return;
+      }
+
       if (!query) {
         toast.error("An error occurred. Please try again.");
         setLoading(false);
         return;
       }
+      
       setActiveQuery(query);
       setLoadingStep(2);
       const companies = await runGenerateSQLQuery(query);
