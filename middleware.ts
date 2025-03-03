@@ -18,15 +18,16 @@ export async function middleware(request: NextRequest) {
   if (sessionCookie) {
     try {
       const parsed = await verifyToken(sessionCookie.value);
-      const expiresInOneDay = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-      // Ensure 'user' is defined
-      const user = parsed.user ?? { id: 0 }; // Provide a default value if undefined
-      
+      // Ensure 'parsed' is not null before proceeding
       if (parsed === null) {
-        // Handle the case where parsed is null
         throw new Error('Session verification failed');
       }
+
+      const expiresInOneDay = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      // Provide a default value for 'user' if undefined
+      const user = parsed.user ?? { id: 0 };
 
       res.cookies.set({
         name: 'session',
