@@ -1,3 +1,10 @@
+interface DecodedToken {
+  sub: string;
+  exp: number;
+  iat: number;
+  // Add other claims as needed
+}
+
 'use server'
 
 import { SignJWT, jwtVerify } from 'jose';
@@ -68,7 +75,7 @@ export async function signToken(payload: SessionData): Promise<string> {
     .sign(key);
 }
 
-export async function verifyToken(token) {
+export async function verifyToken(token: string): Promise<DecodedToken | null> {
   try {
     if (!token) throw new Error("Token is missing");
     
