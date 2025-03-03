@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
 
     // Function to fetch context columns from the "library" table for a given user
-    const fetchContextColumns = async (tableName: string) => {
+    const fetchContextColumns = async (tableName: string): Promise<string[]> => {
       try {
         // Fetch context from the 'library' table where the table_name matches the provided tableName
         const query = `
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Fetch context columns for all selected tables and return them as an array
-    let allColumns = [];
+    let allColumns: string[] = [];
     for (const tableName of tableNames) {
       // Skip invalid table names or "All" if it's not an actual table
       if (tableName === "All" || !tableName) continue;
