@@ -104,6 +104,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@types/js-cookie": "^3.0.6",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/pg": "^8.11.11",
     "csv-parser": "^3.0.0",
