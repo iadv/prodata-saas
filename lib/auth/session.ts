@@ -3,7 +3,9 @@ interface DecodedToken {
   exp: number;
   iat: number;
   // Add other claims as needed
+  user: { id: number }; // Add the user field here
 }
+
 
 'use server'
 
