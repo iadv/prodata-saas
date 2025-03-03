@@ -219,8 +219,7 @@ async function processFiles(
   file: File,
   updateProgress: (progress: number) => void,
   updateStatus: (message: string) => void,
-  //context: { req: NextApiRequest },
-  req: NextApiRequest // Pass req directly
+  //context: { req: NextApiRequest }
 ): Promise<void> {
   updateStatus(`Reading CSV file: ${file.name}`);
 
