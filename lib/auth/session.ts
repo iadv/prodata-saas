@@ -7,7 +7,6 @@ import jwt from 'jsonwebtoken';
 import { NextApiRequest } from 'next';
 import { parse } from 'cookie';
 import { NewUser } from '@/lib/db/schema';
-import Cookies from 'js-cookie';
 import { cookies } from 'next/headers';
 // import { verifyToken } from './token'; // Assuming you have a verifyToken function to validate the session
 
