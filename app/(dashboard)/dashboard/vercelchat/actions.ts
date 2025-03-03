@@ -1,5 +1,6 @@
 "use server";
 
+import { NextResponse } from "next/server"; // Import NextResponse
 import { Config, configSchema, explanationsSchema, Result } from "@/lib/types";
 import { openai } from "@ai-sdk/openai";
 import { sql } from "@vercel/postgres";
