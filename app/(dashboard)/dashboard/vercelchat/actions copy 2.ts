@@ -5,53 +5,44 @@ import { openai } from "@ai-sdk/openai";
 import { sql } from "@vercel/postgres";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { getUser } from "@/lib/db/queries"; // Import getUser function
 
 export const generateQuery = async (
   input: string,
+  schemaName: string,
   context1: string,
   selectedTables: string
 ) => {
   "use server";
   try {
+    const systemPrompt = `You are a SQL (PostgreSQL) and data visualization expert. Your task is to assist the user in writing SQL queries to retrieve the data they need. The user is operating within the schema: ${schemaName}.
 
-    // Retrieve the authenticated user
-    const user = await getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    The tables within this schema are: ${selectedTables}.
 
-    // Define the user's schema name dynamically
-    const schemaName = `user_${user.id}`;
+    Contextual information about the tables: ${context1}
+
+    Only retrieval (SELECT) queries are allowed.
+
+    For string fields, use the ILIKE operator and convert both the search term and the field to lowercase using the LOWER() function. For example: LOWER(field_name) ILIKE LOWER('%search_term%').
+
+    Ensure that every query returns quantitative data suitable for charting, with at least two columns. If the user requests a single column, return that column along with its count. When calculating rates, return them as decimals (e.g., 0.1 represents 10%).
+
+    If the user requests 'over time' data, aggregate the results by year.
+
+    When encountering country abbreviations like 'UK' or 'USA', expand them to 'United Kingdom' or 'United States', respectively.`;
+
+    // EVERY QUERY SHOULD RETURN QUANTITATIVE DATA THAT CAN BE PLOTTED ON A CHART! There should always be at least two columns. If the user asks for a single column, return the column and the count of the column. If the user asks for a rate, return the rate as a decimal. For example, 0.1 would be 10%
+
+    const prompt = `Generate the SQL query necessary to retrieve the data the user wants: ${input}`;
 
     const result = await generateObject({
       model: openai("gpt-4o"),
-      
-      system: `You are a SQL (PostgreSQL) and data visualization expert. Your task is to assist the user in writing SQL queries to retrieve the data they need. The user is operating within the schema: ${schemaName}.
-
-      The tables within this schema are: ${selectedTables}
-  
-      Contextual information about the tables: ${context1}
-  
-      Only retrieval (SELECT) queries are allowed.
-  
-      For string fields, use the ILIKE operator and convert both the search term and the field to lowercase using the LOWER() function. For example: LOWER(field_name) ILIKE LOWER('%search_term%').
-  
-      Ensure that every query returns quantitative data suitable for charting, with at least two columns. If the user requests a single column, return that column along with its count. When calculating rates, return them as decimals (e.g., 0.1 represents 10%).
-  
-      If the user requests 'over time' data, aggregate the results by year.
-  
-      When encountering country abbreviations like 'UK' or 'USA', expand them to 'United Kingdom' or 'United States', respectively.`,
-  
-      // EVERY QUERY SHOULD RETURN QUANTITATIVE DATA THAT CAN BE PLOTTED ON A CHART! There should always be at least two columns. If the user asks for a single column, return the column and the count of the column. If the user asks for a rate, return the rate as a decimal. For example, 0.1 would be 10%
-  
-      // const prompt = `Generate the SQL query necessary to retrieve the data the user wants: ${input}`,
-
-      prompt: `Generate the query necessary to retrieve the data the user wants: ${input}`,
+      system: systemPrompt,
+      prompt: prompt,
       schema: z.object({
         query: z.string(),
       }),
     });
+
     return result.object.query;
   } catch (e) {
     console.error(e);
@@ -187,21 +178,7 @@ export const generateChartConfig = async (
 export const generateContext = async (columns: ColumnInfo[]): Promise<string> => {
   try {
     const columnNames = columns.map(col => col.name).join(", ");
-    const prompt = `You are an AI expert helping to generate context for a table. The table contains the following columns: ${columnNames}. Mention what data each column contains. Also, Based on these column names, provide a brief context (less than 5 sentences) about what this table represents, and offer guidelines for someone analyzing the data. Ensure your explanation provides clarity and includes recommendations on how to handle string fields, missing values, and any other relevant considerations for analysis.
-    Also, include a table schema similar to the example provided here based on the ${columnNames}. The example table schema is as follows where uniforns is name of the table:
-
-      unicorns (
-      id SERIAL PRIMARY KEY,
-      company VARCHAR(255) NOT NULL UNIQUE,
-      valuation DECIMAL(10, 2) NOT NULL,
-      date_joined DATE,
-      country VARCHAR(255) NOT NULL,
-      city VARCHAR(255) NOT NULL,
-      industry VARCHAR(255) NOT NULL,
-      select_investors TEXT NOT NULL
-    );
-      
-      `;
+    const prompt = `You are an AI expert helping to generate context for a table. The table contains the following columns: ${columnNames}. Based on these column names, provide a brief context (less than 5 sentences) about what this table represents, and offer guidelines for someone analyzing the data. Ensure your explanation provides clarity and includes recommendations on how to handle string fields, missing values, and any other relevant considerations for analysis.`;
 
     const result = await generateObject({
       model: openai("gpt-4o"),

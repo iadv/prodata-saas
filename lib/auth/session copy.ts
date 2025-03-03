@@ -1,16 +1,6 @@
-'use server'
-
 import { SignJWT, jwtVerify } from 'jose';
-//import { cookies } from 'next-cookies';
-//import { parseCookies } from "nookies";
-import jwt from 'jsonwebtoken';
-import { NextApiRequest } from 'next';
-import { parse } from 'cookie';
+import { cookies } from 'next-cookies';
 import { NewUser } from '@/lib/db/schema';
-import Cookies from 'js-cookie';
-import { cookies } from 'next/headers';
-// import { verifyToken } from './token'; // Assuming you have a verifyToken function to validate the session
-
 
 const key = new TextEncoder().encode(process.env.AUTH_SECRET);
 const SALT_LENGTH = 16;
@@ -69,45 +59,17 @@ export async function signToken(payload: SessionData): Promise<string> {
     .sign(key);
 }
 
-export async function verifyToken(token) {
-  try {
-    if (!token) throw new Error("Token is missing");
-    
-    // Simulate token verification (replace with your JWT verification logic)
-    const decoded = JSON.parse(atob(token.split(".")[1])); // For JWT tokens
-    return decoded;
-  } catch (error) {
-    console.error("Invalid token:", error);
-    return null;
-  }
+export async function verifyToken(input: string): Promise<SessionData> {
+  const { payload } = await jwtVerify(input, key, {
+    algorithms: ['HS256'],
+  });
+  return payload as SessionData;
 }
 
-
-export async function getSession(req: NextApiRequest) {
-
-  
-
-  // Retrieve the 'session' cookie
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('session');
-
-    // Log all incoming request headers
-console.log('Request Headers:', req.headers);
-
-// Check if the 'cookie' header is present
-if (req.headers.cookie) {
-  console.log('Cookies:', req.headers.cookie);
-} else {
-  console.log('No cookies found in the request headers.');
-}
-
-
-  if (!sessionCookie) {
-    return null; // No session found
-  }
-
-  // Optionally, decode or verify the session cookie here if needed
-  return { sessionCookie: sessionCookie.value };
+export async function getSession() {
+  const session = (await cookies()).get('session')?.value;
+  if (!session) return null;
+  return await verifyToken(session);
 }
 
 export async function setSession(user: NewUser) {

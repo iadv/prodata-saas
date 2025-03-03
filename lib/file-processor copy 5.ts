@@ -6,26 +6,6 @@ import { neon } from '@neondatabase/serverless';
 import dotenv from 'dotenv';
 import { getSession } from '@/lib/auth/session';
 import { getUser } from '@/lib/db/queries';
-// for the library table to work. Imports are below
-import fs from "fs";
-import csvParser from "csv-parser";
-import { Pool } from "pg";
-// import { generateContext, generateSampleQuestions } from "@/app/(dashboard)/dashboard/upload/actions";
-import { openai } from "@ai-sdk/openai";
-// import { sql } from "@vercel/postgres";
-import { generateObject } from "ai";
-import { z } from "zod";
-// import { Configuration, OpenAIApi } from "openai";
-import { Config, configSchema, explanationsSchema, Result } from "@/lib/types";
-import { generateContext } from '@/app/(dashboard)/dashboard/vercelchat/actions';
-import { generateSampleQuestions } from '@/app/(dashboard)/dashboard/vercelchat/actions';
-import { generateSampleQuestions_mobile } from '@/app/(dashboard)/dashboard/vercelchat/actions';
-
-// Initialize OpenAI API
-// const configuration = new Configuration({
- // apiKey: process.env.OPENAI_API_KEY,
-// });
-// const openai = new OpenAIApi(configuration);
 
 
 //import { getSession } from './auth/session'; // Adjust the import path as needed
@@ -142,79 +122,6 @@ async function createTableFromData(
   }
 }
 
-// Function to create the library table if it doesn't exist
-async function createLibraryTable(schemaName: string): Promise<void> {
-  const checkLibraryTableQuery = `
-    SELECT table_name
-    FROM information_schema.tables
-    WHERE table_schema = $1 AND table_name = 'library';
-  `;
-  const result = await sql(checkLibraryTableQuery, [schemaName]);
-
-  // If the library table doesn't exist, create it
-  if (result.length === 0) {
-    const createLibraryTableQuery = `
-      CREATE TABLE IF NOT EXISTS "${schemaName}".library (
-        id SERIAL PRIMARY KEY,
-        table_name TEXT NOT NULL,
-        column_names TEXT NOT NULL,
-        context TEXT NOT NULL,
-        sample_question_1 TEXT,
-        sample_question_2 TEXT,
-        sample_question_3 TEXT,
-        sample_question_4 TEXT,
-        sample_question_5 TEXT,
-        sample_question_6 TEXT,
-        sample_question_7 TEXT,
-        sample_question_8 TEXT,
-        sample_question_9 TEXT,
-        sample_question_10 TEXT,
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `;
-    await sql(createLibraryTableQuery);
-  }
-}
-
-// Function to add a new row to the library table with context
-async function addRowToLibraryTable(schemaName: string, tableName: string, columns: ColumnInfo[]): Promise<void> {
-  // Generate context based on columns
-  const context = await generateContext(columns);
-
-  // Concatenate the column names into a single string
-  const columnNames = columns.map(col => col.name).join(' ');
-
-  // Generate sample questions (which returns an array of 5 questions) for web viewing
-  const sampleQuestions = await generateSampleQuestions(columns);
-
-    // Generate sample questions (which returns an array of 5 questions) for mobile viewing
-    const sampleQuestions_mobile = await generateSampleQuestions_mobile(columns);
-
-  // Insert into the library table
-  const insertQuery = `
-    INSERT INTO "${schemaName}".library (table_name, column_names, context, sample_question_1, sample_question_2, sample_question_3, sample_question_4, sample_question_5, sample_question_6, sample_question_7, sample_question_8, sample_question_9, sample_question_10)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-  `;
-  await sql(insertQuery, [
-    tableName,
-    columnNames,
-    context,
-    sampleQuestions[0],
-    sampleQuestions[1],
-    sampleQuestions[2],
-    sampleQuestions[3],
-    sampleQuestions[4],
-    sampleQuestions_mobile[0],
-    sampleQuestions_mobile[1],
-    sampleQuestions_mobile[2],
-    sampleQuestions_mobile[3],
-    sampleQuestions_mobile[4]
-  ]);
-}
-
-
-
-
 async function processFiles(
   file: File,
   updateProgress: (progress: number) => void,
@@ -261,19 +168,6 @@ async function processFiles(
             };
           });
 
-          // Generate context for the table using the column information
-          const context = await generateContext(columns);
-          updateStatus(`Generated context: ${context}`);
-
-          // Generate sample questions for the table using the column information for web viewing
-
-          const sampleQuestions = await generateSampleQuestions(columns);
-          console.log("Sample Questions:", sampleQuestions);
-
-          // Generate sample questions for the table using the column information for mobile viewing
-          const sampleQuestions_mobile = await generateSampleQuestions_mobile(columns);
-          console.log("Sample Questions:", sampleQuestions_mobile);
-
           // Retrieve user session
           const user = await getUser();
 
@@ -287,15 +181,8 @@ async function processFiles(
           // Create schema if it doesn't exist
           await createSchemaIfNotExists(schemaName);
 
-          // Create the library table if it doesn't exist
-          await createLibraryTable(schemaName);
-
-          // Add a new row to the library table for this new CSV table
-          await addRowToLibraryTable(schemaName, tableName, columns);
-
           // Create table and insert data into the user's schema
           await createTableFromData(schemaName, tableName, columns, results.data, updateStatus);
-
 
           updateStatus(`Successfully processed CSV for ${schemaName}.${tableName}`);
           resolve();
@@ -303,7 +190,6 @@ async function processFiles(
           console.error('Error processing file:', error);
           updateStatus(`Error processing file: ${error instanceof Error ? error.message : 'Unknown error'}`);
           reject(error);
-          
         }
       },
     });

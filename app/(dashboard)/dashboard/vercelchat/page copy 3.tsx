@@ -178,64 +178,8 @@ export default function Page() {
     setLoadingStep(1);
     setActiveQuery("");
     try {
-
-      const selectedTablesString = selectedTables.join(" ");
-
-      // Fetch columns for each selected table
-      const fetchColumnsForTable = async (table: string) => {
-        try {
-          const res = await fetch("/api/contextfetch", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              tableNames: [table], // Pass tableNames as an array
-            }),
-          });
-
-          if (!res.ok) {
-            throw new Error(`Failed to fetch columns for table: ${table}`);
-          }
-
-          const data = await res.json();
-
-          // Ensure you're accessing 'columns' properly
-          return data.columns ? data.columns.join(" ") : ''; // Join columns into a single string
-        } catch (error) {
-          console.error(error);
-          return '';
-        }
-      };
-
-      // Fetch context columns for each selected table
-      const selectedTableColumnsPromises = selectedTables.map(async (table) => {
-        const columns = await fetchColumnsForTable(table);
-        return columns; // No need to join here since it's done in the API now
-      });
-      
-      // Declare concatenatedContext outside the try block
-      let concatenatedContext = "";
-      
-      // Wait for all promises to resolve and log the concatenated output
-      try {
-        const selectedColumns = await Promise.all(selectedTableColumnsPromises);
-        
-        // Log the concatenated context for all selected tables
-        const concatenatedContext = selectedColumns.join(" ");  // Join all columns into a single string
-        console.log("Concatenated context columns:", concatenatedContext);
-      } catch (error) {
-        console.error("Error fetching context columns:", error);
-      }
-
       // Pass selectedTables to restrict query scope
-      const query = await generateQuery(question, concatenatedContext, selectedTablesString);
-
-      // Log selectedTables here after generateQuery
-      console.log("Selected Tables:", selectedTablesString);
-      // console.log("Selected Tables String:", selectedTablesString);
-      // console.log("Context Columns String:", selectedTableColumnsPromises);
-
+      const query = await generateQuery(question, selectedTables);
       if (!query) {
         toast.error("An error occurred. Please try again.");
         setLoading(false);

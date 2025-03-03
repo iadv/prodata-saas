@@ -18,8 +18,6 @@ import { z } from "zod";
 // import { Configuration, OpenAIApi } from "openai";
 import { Config, configSchema, explanationsSchema, Result } from "@/lib/types";
 import { generateContext } from '@/app/(dashboard)/dashboard/vercelchat/actions';
-import { generateSampleQuestions } from '@/app/(dashboard)/dashboard/vercelchat/actions';
-import { generateSampleQuestions_mobile } from '@/app/(dashboard)/dashboard/vercelchat/actions';
 
 // Initialize OpenAI API
 // const configuration = new Configuration({
@@ -159,16 +157,6 @@ async function createLibraryTable(schemaName: string): Promise<void> {
         table_name TEXT NOT NULL,
         column_names TEXT NOT NULL,
         context TEXT NOT NULL,
-        sample_question_1 TEXT,
-        sample_question_2 TEXT,
-        sample_question_3 TEXT,
-        sample_question_4 TEXT,
-        sample_question_5 TEXT,
-        sample_question_6 TEXT,
-        sample_question_7 TEXT,
-        sample_question_8 TEXT,
-        sample_question_9 TEXT,
-        sample_question_10 TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `;
@@ -184,32 +172,11 @@ async function addRowToLibraryTable(schemaName: string, tableName: string, colum
   // Concatenate the column names into a single string
   const columnNames = columns.map(col => col.name).join(' ');
 
-  // Generate sample questions (which returns an array of 5 questions) for web viewing
-  const sampleQuestions = await generateSampleQuestions(columns);
-
-    // Generate sample questions (which returns an array of 5 questions) for mobile viewing
-    const sampleQuestions_mobile = await generateSampleQuestions_mobile(columns);
-
-  // Insert into the library table
   const insertQuery = `
-    INSERT INTO "${schemaName}".library (table_name, column_names, context, sample_question_1, sample_question_2, sample_question_3, sample_question_4, sample_question_5, sample_question_6, sample_question_7, sample_question_8, sample_question_9, sample_question_10)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+    INSERT INTO "${schemaName}".library (table_name, column_names, context)
+    VALUES ($1, $2, $3)
   `;
-  await sql(insertQuery, [
-    tableName,
-    columnNames,
-    context,
-    sampleQuestions[0],
-    sampleQuestions[1],
-    sampleQuestions[2],
-    sampleQuestions[3],
-    sampleQuestions[4],
-    sampleQuestions_mobile[0],
-    sampleQuestions_mobile[1],
-    sampleQuestions_mobile[2],
-    sampleQuestions_mobile[3],
-    sampleQuestions_mobile[4]
-  ]);
+  await sql(insertQuery, [tableName, columnNames, context]);
 }
 
 
@@ -264,15 +231,6 @@ async function processFiles(
           // Generate context for the table using the column information
           const context = await generateContext(columns);
           updateStatus(`Generated context: ${context}`);
-
-          // Generate sample questions for the table using the column information for web viewing
-
-          const sampleQuestions = await generateSampleQuestions(columns);
-          console.log("Sample Questions:", sampleQuestions);
-
-          // Generate sample questions for the table using the column information for mobile viewing
-          const sampleQuestions_mobile = await generateSampleQuestions_mobile(columns);
-          console.log("Sample Questions:", sampleQuestions_mobile);
 
           // Retrieve user session
           const user = await getUser();
