@@ -55,7 +55,7 @@ export const SuggestedQueries = ({
   schemaName,
 }: {
   handleSuggestionClick: (suggestion: string) => void;
-  schemaName: string;
+  schemaName?: string;
 }) => {
   const [websiteQuestions, setWebsiteQuestions] = useState<string[]>([]);
   const [mobileQuestions, setMobileQuestions] = useState<string[]>([]);
