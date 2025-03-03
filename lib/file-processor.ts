@@ -327,7 +327,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'POST') {
     try {
       // Call the processFiles function with request context
-      await processFiles(req.body.file, (progress) => { /* update progress */ }, (message) => { /* update status */ }, { req });
+      await processFiles(req.body.file, (progress) => { /* update progress */ }, (message) => { /* update status */ });
 
       res.status(200).json({ message: 'File processed successfully' });
     } catch (error) {
