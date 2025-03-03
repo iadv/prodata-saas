@@ -1,9 +1,9 @@
 interface DecodedToken {
   sub: string;
-  exp: number;
-  iat: number;
-  // Add other claims as needed
-  user: { id: number }; // Add the user field here
+  exp: number; // Standard expiration time field in JWTs
+  iat: number; // Issued at time
+  user: { id: number }; // User data
+  expires: string; // This is the field that stores expiration as a string
 }
 
 
