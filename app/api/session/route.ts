@@ -14,6 +14,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Session not found' }, { status: 401 });
     }
 
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET is not defined');
+    }
+
     // Verify JWT token
     const decodedToken = jwt.verify(sessionCookie, process.env.JWT_SECRET);
 
