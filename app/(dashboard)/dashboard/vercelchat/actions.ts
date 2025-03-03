@@ -1,3 +1,11 @@
+// Define the ColumnInfo interface
+interface ColumnInfo {
+  originalName: string;
+  name: string;
+  type: string;
+  nullable: boolean;
+}
+
 "use server";
 
 import { NextResponse } from "next/server"; // Import NextResponse
