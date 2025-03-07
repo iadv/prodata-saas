@@ -141,6 +141,34 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
     };
   }
 
+
+
+  // **1. Create a schema specific to this user**
+  const userSchema = `user_${createdUser.id}`;
+  // await db.execute(sql.raw(`CREATE SCHEMA ${userSchema};`));
+
+  // **2. Create the `library` table within the new schema**
+  await db.execute(sql.raw(`
+    CREATE TABLE ${userSchema}.library (
+        id SERIAL PRIMARY KEY,
+        table_name TEXT NOT NULL,
+        column_names TEXT NOT NULL,
+        context TEXT NOT NULL,
+        sample_question_1 TEXT,
+        sample_question_2 TEXT,
+        sample_question_3 TEXT,
+        sample_question_4 TEXT,
+        sample_question_5 TEXT,
+        sample_question_6 TEXT,
+        sample_question_7 TEXT,
+        sample_question_8 TEXT,
+        sample_question_9 TEXT,
+        sample_question_10 TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `));
+
+
   let teamId: number;
   let userRole: string;
   let createdTeam: typeof teams.$inferSelect | null = null;
