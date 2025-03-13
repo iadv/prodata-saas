@@ -15,9 +15,7 @@ export const QueryViewer = ({
 }) => {
   const activeQueryCutoff = 100;
 
-  const [queryExplanations, setQueryExplanations] = useState<
-    QueryExplanation[] | null
-  >();
+  const [queryExplanations, setQueryExplanations] = useState<string[] | null>(null); // Change this to string[]
   const [loadingExplanation, setLoadingExplanation] = useState(false);
   const [queryExpanded, setQueryExpanded] = useState(activeQuery.length > activeQueryCutoff);
 
