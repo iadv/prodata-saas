@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     const selectedTableRows = await Promise.all(rowsPromises);
 
     // Combine results into a single object with table names as keys
-    const rowsObj = selectedTableRows.reduce((acc, rows, index) => {
+    const rowsObj = selectedTableRows.reduce<{ [key: string]: any[] }>((acc, rows, index) => {
       const table = tables[index];
       acc[table] = rows;
       return acc;
