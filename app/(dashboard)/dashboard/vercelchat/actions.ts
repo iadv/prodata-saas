@@ -95,7 +95,7 @@ export const runGenerateSQLQuery = async (query: string) => {
 };
 
 // Function to explain SQL query
-export const explainQuery = async (input: string, sqlQuery: string) => {
+export const explainQuery = async (input: string, sqlQuery: string): Promise<string[]> => {
   try {
     const result = await generateObject({
       model: openai("gpt-4o"),
