@@ -1,3 +1,9 @@
+type QueryExplanation1 = {
+  section: string;
+  explanation: string;
+};
+
+
 // Define the ColumnInfo interface
 interface ColumnInfo {
   originalName: string;
@@ -95,7 +101,7 @@ export const runGenerateSQLQuery = async (query: string) => {
 };
 
 // Function to explain SQL query
-export const explainQuery = async (input: string, sqlQuery: string): Promise<string[]> => {
+export const explainQuery = async (input: string, sqlQuery: string): Promise<QueryExplanation1[]> => {
   try {
     const result = await generateObject({
       model: openai("gpt-4o"),
@@ -106,7 +112,11 @@ export const explainQuery = async (input: string, sqlQuery: string): Promise<str
       }),
     });
 
-    return result.object.explanations;
+    // Assuming each explanation should be wrapped in a section object.
+    return result.object.explanations.map((explanation: string, index: number) => ({
+      section: `Section ${index + 1}`, // You can customize how you generate the section name
+      explanation,
+    }));
   } catch (e) {
     console.error("Error explaining query:", e);
     throw new Error("Failed to explain query");

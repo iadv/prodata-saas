@@ -1,3 +1,8 @@
+type QueryExplanation1 = {
+  section: string;
+  explanation: string;
+};
+
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { QueryWithTooltips } from "./ui/query-with-tooltips";
@@ -15,7 +20,7 @@ export const QueryViewer = ({
 }) => {
   const activeQueryCutoff = 100;
 
-  const [queryExplanations, setQueryExplanations] = useState<string[] | null>(null); // Change this to string[]
+  const [queryExplanations, setQueryExplanations] = useState<QueryExplanation1[] | null>(null); // Change this to string[]
   const [loadingExplanation, setLoadingExplanation] = useState(false);
   const [queryExpanded, setQueryExpanded] = useState(activeQuery.length > activeQueryCutoff);
 
