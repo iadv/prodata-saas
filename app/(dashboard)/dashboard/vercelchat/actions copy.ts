@@ -4,39 +4,25 @@ interface ColumnInfo {
   name: string;
   type: string;
   nullable: boolean;
-};
+}
 
 "use server";
 
-import { NextResponse } from "next/server";
+import { NextResponse } from "next/server"; // Import NextResponse
 import { Config, configSchema, explanationsSchema, Result } from "@/lib/types";
 import { openai } from "@ai-sdk/openai";
 import { sql } from "@vercel/postgres";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { getUser } from "@/lib/db/queries";
+import { getUser } from "@/lib/db/queries"; // Import getUser function
 
-// Utility function to create schema name
-const getSchemaName = async (): Promise<string> => {
-  const user = await getUser();
-  if (!user) {
-    throw new Error("Unauthorized");
-  }
-  return `user_${user.id}`;
-};
-
-// Utility function to generate SQL query
-const createSqlQuery = (input: string, context: string, selectedTables: string, exampleData: any): string => {
-  return `Generate the SQL query to retrieve data based on the user's input: "${input}". The schema includes tables: ${selectedTables}. Table descriptions: ${context}. Example data: ${JSON.stringify(exampleData)}`;
-};
-
-// Function to generate SQL query
 export const generateQuery = async (
   input: string,
   context1: string,
   selectedTables: string,
   rowsobj: any // Adding rowsobj parameter
 ) => {
+  "use server";
   try {
 
     // Retrieve the authenticated user
@@ -79,40 +65,80 @@ export const generateQuery = async (
   }
 };
 
-// Function to run SQL query
 export const runGenerateSQLQuery = async (query: string) => {
-  if (!query.trim().toLowerCase().startsWith("select")) {
+  "use server";
+  // Check if the query is a SELECT statement
+  if (
+    !query.trim().toLowerCase().startsWith("select") ||
+    query.trim().toLowerCase().includes("drop") ||
+    query.trim().toLowerCase().includes("delete") ||
+    query.trim().toLowerCase().includes("insert") ||
+    query.trim().toLowerCase().includes("update") ||
+    query.trim().toLowerCase().includes("alter") ||
+    query.trim().toLowerCase().includes("truncate") ||
+    query.trim().toLowerCase().includes("create") ||
+    query.trim().toLowerCase().includes("grant") ||
+    query.trim().toLowerCase().includes("revoke")
+  ) {
     throw new Error("Only SELECT queries are allowed");
   }
 
+  let data: any;
   try {
-    const data = await sql.query(query);
-    return data.rows;
-  } catch (e) {
-    console.error("Error executing query:", e);
-    throw new Error("Failed to execute query");
+    data = await sql.query(query);
+  } catch (e: any) {
+    if (e.message.includes('relation "unicorns" does not exist')) {
+      console.log(
+        "Table does not exist, creating and seeding it with dummy data now...",
+      );
+      // throw error
+      throw Error("Table does not exist");
+    } else {
+      throw e;
+    }
   }
+
+  return data.rows as Result[];
 };
 
-// Function to explain SQL query
 export const explainQuery = async (input: string, sqlQuery: string) => {
+  "use server";
   try {
     const result = await generateObject({
       model: openai("gpt-4o"),
-      system: "You are a SQL (PostgreSQL) expert. Explain the SQL query in simple terms.",
-      prompt: `Explain the SQL query: "${sqlQuery}" generated to retrieve data based on the user's input: "${input}".`,
       schema: z.object({
-        explanations: z.array(z.string()),
+        explanations: explanationsSchema,
       }),
-    });
+      system: `You are a SQL (postgres) expert. Your job is to explain to the user write a SQL query you wrote to retrieve the data they asked for. The table schema is as follows:
+    unicorns (
+      id SERIAL PRIMARY KEY,
+      company VARCHAR(255) NOT NULL UNIQUE,
+      valuation DECIMAL(10, 2) NOT NULL,
+      date_joined DATE,
+      country VARCHAR(255) NOT NULL,
+      city VARCHAR(255) NOT NULL,
+      industry VARCHAR(255) NOT NULL,
+      select_investors TEXT NOT NULL
+    );
 
-    return result.object.explanations;
+    When you explain you must take a section of the query, and then explain it. Each "section" should be unique. So in a query like: "SELECT * FROM unicorns limit 20", the sections could be "SELECT *", "FROM UNICORNS", "LIMIT 20".
+    If a section doesnt have any explanation, include it, but leave the explanation empty.
+
+    `,
+      prompt: `Explain the SQL query you generated to retrieve the data the user wanted. Assume the user is not an expert in SQL. Break down the query into steps. Be concise.
+
+      User Query:
+      ${input}
+
+      Generated SQL Query:
+      ${sqlQuery}`,
+    });
+    return result.object;
   } catch (e) {
-    console.error("Error explaining query:", e);
-    throw new Error("Failed to explain query");
+    console.error(e);
+    throw new Error("Failed to generate query");
   }
 };
-
 
 export const generateChartConfig = async (
   results: Result[],
@@ -122,14 +148,6 @@ export const generateChartConfig = async (
   const system = `You are a data visualization expert. `;
 
   try {
-    // Nested function to limit the size of the JSON array
-    const limitJsonArraySize = (data: any[], maxRows: number = 50): any[] => {
-      return data.slice(0, maxRows);
-    };
-
-    // Limit the results to the maximum number of rows
-    const limitedResults = limitJsonArraySize(results);
-
     const { object: config } = await generateObject({
       model: openai("gpt-4o"),
       system,
@@ -153,7 +171,7 @@ export const generateChartConfig = async (
       ${userQuery}
 
       Data:
-      ${JSON.stringify(limitedResults, null, 2)}`,
+      ${JSON.stringify(results, null, 2)}`,
       schema: configSchema,
     });
 
@@ -171,11 +189,25 @@ export const generateChartConfig = async (
   }
 };
 
-// Function to generate table context
+// Defining the function in the same way as `generateQuery`
 export const generateContext = async (columns: ColumnInfo[]): Promise<string> => {
   try {
     const columnNames = columns.map(col => col.name).join(", ");
-    const prompt = `Describe the table with columns: ${columnNames}. Provide data descriptions and analysis guidelines.`;
+    const prompt = `You are an AI expert helping to generate context for a table. The table contains the following columns: ${columnNames}. Mention what data each column contains. Also, Based on these column names, provide a brief context (less than 5 sentences) about what this table represents, and offer guidelines for someone analyzing the data. Ensure your explanation provides clarity and includes recommendations on how to handle string fields, missing values, and any other relevant considerations for analysis.
+    Also, include a table schema similar to the example provided here based on the ${columnNames}. The example table schema is as follows where uniforns is name of the table:
+
+      unicorns (
+      id SERIAL PRIMARY KEY,
+      company VARCHAR(255) NOT NULL UNIQUE,
+      valuation DECIMAL(10, 2) NOT NULL,
+      date_joined DATE,
+      country VARCHAR(255) NOT NULL,
+      city VARCHAR(255) NOT NULL,
+      industry VARCHAR(255) NOT NULL,
+      select_investors TEXT NOT NULL
+    );
+      
+      `;
 
     const result = await generateObject({
       model: openai("gpt-4o"),
@@ -186,17 +218,19 @@ export const generateContext = async (columns: ColumnInfo[]): Promise<string> =>
     });
 
     return result.object.context;
-  } catch (e) {
-    console.error("Error generating context:", e);
-    throw new Error("Failed to generate context");
+  } catch (error) {
+    console.error("Error generating context:", error);
+    return "Context generation failed.";
   }
 };
 
-// Function to generate sample questions
 export const generateSampleQuestions = async (columns: ColumnInfo[]): Promise<string[]> => {
   try {
+    // Extract column names to pass in the prompt
     const columnNames = columns.map(col => col.name).join(", ");
-    const prompt = `Generate five sample questions based on the table with columns: ${columnNames}.`;
+    
+    // Prompt the AI to generate questions based on the column names
+    const prompt = `Generate five sample natural language questions a customer might ask about the following table. The table has the following columns: ${columnNames}. Keep each question short and concise (less than 10 words), and ensure that the questions provide an idea of the type of questions the user can ask.`;
 
     const result = await generateObject({
       model: openai("gpt-4o"),
@@ -206,10 +240,10 @@ export const generateSampleQuestions = async (columns: ColumnInfo[]): Promise<st
       }),
     });
 
-    return result.object.questions;
-  } catch (e) {
-    console.error("Error generating sample questions:", e);
-    throw new Error("Failed to generate sample questions");
+    return result.object.questions; // This will return an array of 5 questions
+  } catch (error) {
+    console.error("Error generating sample questions for website UI:", error);
+    return ["Sample question generation for website UI failed."];
   }
 };
 
@@ -219,7 +253,7 @@ export const generateSampleQuestions_mobile = async (columns: ColumnInfo[]): Pro
     const columnNames = columns.map(col => col.name).join(", ");
     
     // Prompt the AI to generate questions based on the column names
-    const prompt = `Generate five sample natural language questions a customer might ask about the following table. The table has the following columns: ${columnNames}. This will be for a mobile UI experience. Keep each question to less than 3 words. Be creative, using abbreviations like 'vs.' if needed. Ensure that the questions provide an idea of the type of questions the user can ask.`;
+    const prompt = `Generate five sample natural language questions a customer might ask about the following table. The table has the following columns: ${columnNames}. This will be for a mobile UI experience. Keep each question to less than 3 words. Be creative for example use abbrevations like vs. if needed. Ensure that the questions provide an idea of the type of questions the user can ask.`;
 
     const result = await generateObject({
       model: openai("gpt-4o"),
@@ -235,3 +269,4 @@ export const generateSampleQuestions_mobile = async (columns: ColumnInfo[]): Pro
     return ["Sample question generation for mobile UI failed."];
   }
 };
+

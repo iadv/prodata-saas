@@ -27,6 +27,7 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(1);
   const [chartConfig, setChartConfig] = useState<Config | null>(null);
+  const [tableRows, setTableRows] = useState<Record<string, any[]> | null>(null);
 
    // State for table selection
    const [availableTables, setAvailableTables] = useState<string[]>([]);
@@ -169,6 +170,31 @@ export default function Page() {
      );
    };
 
+  const fetchTopRowsForTable = async (table: string) => {
+    try {
+      const res = await fetch("/api/fetchTopRows", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tableName: table, // Pass tableName to get the top 5 rows
+        }),
+      });
+  
+      if (!res.ok) {
+        throw new Error(`Failed to fetch top rows for table: ${table}`);
+      }
+  
+      const data = await res.json();
+      return data.rows || []; // Return top 5 rows or an empty array if no rows
+    } catch (error) {
+      console.error("Error fetching top rows:", error);
+      return [];
+    }
+  };
+
+
   const handleSubmit = async (suggestion?: string) => {
     const question = suggestion ?? inputValue;
     if (question.trim().length === 0) return;
@@ -180,6 +206,34 @@ export default function Page() {
     try {
 
       const selectedTablesString = selectedTables.join(" ");
+
+      // Prepare the request payload with the selected tables and limit
+      const requestBody = {
+        tables: selectedTables, // Send the list of selected tables
+        limit: 5 // Set the limit to 5
+      };
+
+      // Fetch the top rows for each selected table
+      const res = await fetch("/api/fetchTopRows", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch top rows for tables: ${selectedTables}`);
+      }
+
+      const data = await res.json();
+      const rowsObj = data.rows; // Assuming the response contains the rows object
+
+      // Set the top 5 rows in the state
+      setTableRows(rowsObj); // Save the top 5 rows for each table
+
+      // Log the top 5 rows for each table
+      console.log("Top 5 rows for each selected table haha:", rowsObj);
 
       // Fetch columns for each selected table
       const fetchColumnsForTable = async (table: string) => {
@@ -229,10 +283,11 @@ export default function Page() {
       }
 
       // Pass selectedTables to restrict query scope
-      const query = await generateQuery(question, concatenatedContext, selectedTablesString);
+      const query = await generateQuery(question, concatenatedContext, selectedTablesString, rowsObj);
 
       // Log selectedTables here after generateQuery
       console.log("Selected Tables:", selectedTablesString);
+      console.log("Context Columns:", concatenatedContext);
       // console.log("Selected Tables String:", selectedTablesString);
       // console.log("Context Columns String:", selectedTableColumnsPromises);
 
@@ -248,7 +303,7 @@ export default function Page() {
         setLoading(false);
         return;
       }
-      
+
       setActiveQuery(query);
       setLoadingStep(2);
       const companies = await runGenerateSQLQuery(query);
