@@ -23,7 +23,7 @@ export const QueryViewer = ({
     setQueryExpanded(true);
     setLoadingExplanation(true);
     
-    const { explanations } = await explainQuery(inputValue, activeQuery);
+    const explanations = await explainQuery(inputValue, activeQuery);
     setQueryExplanations(explanations);
     setLoadingExplanation(false);
   };
