@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
         });
 
         return resultRows;
-      } catch (error) {
+      } catch (error:any) {
         console.error(`Error fetching top rows for ${schema}.${table}:`, error);
         throw new Error(`Error fetching rows from table: ${schema}.${table}`);
       }
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     // Return the rows or an empty object if no rows were found
     return NextResponse.json({ rows: rowsObj });
 
-  } catch (error) {
+  } catch (error:any) {
     console.error("Error fetching top rows:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }
