@@ -5,6 +5,10 @@ import { explainQuery } from "@/app/(dashboard)/dashboard/vercelchat/actions";
 import { QueryExplanation } from "@/lib/types";
 import { CircleHelp, Loader2 } from "lucide-react";
 
+interface ExplainQueryResult {
+  explanations: string[]; // Assuming the explanations are an array of strings
+}
+
 export const QueryViewer = ({
   activeQuery,
   inputValue,
@@ -14,7 +18,7 @@ export const QueryViewer = ({
 }) => {
   const activeQueryCutoff = 100;
 
-  const [queryExplanations, setQueryExplanations] = useState<
+  const [queryExplanations, setQueryExplanations] = useState<string[] |
     QueryExplanation[] | null
   >();
   const [loadingExplanation, setLoadingExplanation] = useState(false);
@@ -23,7 +27,8 @@ export const QueryViewer = ({
   const handleExplainQuery = async () => {
     setQueryExpanded(true);
     setLoadingExplanation(true);
-    const { explanations } = await explainQuery(inputValue, activeQuery);
+    
+    const { explanations }: ExplainQueryResult  = await explainQuery(inputValue, activeQuery);
     setQueryExplanations(explanations);
     setLoadingExplanation(false);
   };
