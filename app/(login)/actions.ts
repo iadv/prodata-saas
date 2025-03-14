@@ -177,8 +177,8 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
     );
 
     CREATE INDEX IF NOT EXISTS idx_historical_created_at 
-      ON ${sql.unsafe(`${schemaName}.historical`)}(created_at DESC);
-      
+      ON ${sql.unsafe(`${userSchema}.historical`)}(created_at DESC);
+
   `));
 
 
