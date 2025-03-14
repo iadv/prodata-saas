@@ -12,7 +12,7 @@ interface HistoryItem {
   createdAt: string;
 }
 
-interface HistorySidebarProps {
+export interface HistorySidebarProps {
   onSelectHistoryItem: (prompt: string) => void;
   currentPrompt: string;
 }
