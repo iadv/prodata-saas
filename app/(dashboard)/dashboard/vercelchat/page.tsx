@@ -52,7 +52,7 @@ export default function Page() {
         const data = await res.json();
         
         // Filter out the "library" and "historical" tables
-        const filteredTables = data.filter(table => 
+        const filteredTables = data.filter((table: string) => 
           table !== "library" && table !== "historical"
         );
 
