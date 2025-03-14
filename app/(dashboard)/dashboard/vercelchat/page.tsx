@@ -47,12 +47,16 @@ export default function Page() {
          }
          const data = await res.json();
          console.log(data); // Inspect the returned data
-         setAvailableTables(data);
-         // Default to "All" if tables exist
-         setSelectedTables(data.length > 0 ? ["All"] : []);
-       } catch (error) {
-         console.error("Error fetching tables:", error);
-       }
+         
+        // Filter out the "library" table
+        const filteredTables = data.filter(table => table !== "library");
+
+        setAvailableTables(filteredTables);
+        // Default to "All" if tables exist
+        setSelectedTables(filteredTables.length > 0 ? ["All"] : []);
+      } catch (error) {
+        console.error("Error fetching tables:", error);
+      }
      }
      fetchTables();
    }, []);
