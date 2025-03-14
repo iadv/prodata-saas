@@ -145,7 +145,7 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
 
   // **1. Create a schema specific to this user**
   const userSchema = `user_${createdUser.id}`;
-  // await db.execute(sql.raw(`CREATE SCHEMA ${userSchema};`));
+  //await db.execute(sql.raw(`CREATE SCHEMA ${userSchema};`));
 
   // **2. Create the `library` table within the new schema**
   await db.execute(sql.raw(`
@@ -166,6 +166,19 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
         sample_question_10 TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW()
     );
+  `));
+
+  // **3. Create the `historical` table within the new schema**
+  await db.execute(sql.raw(`
+    CREATE TABLE ${userSchema}.historical (
+      id SERIAL PRIMARY KEY,
+      prompt TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_historical_created_at 
+      ON ${sql.unsafe(`${schemaName}.historical`)}(created_at DESC);
+      
   `));
 
 

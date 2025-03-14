@@ -95,16 +95,11 @@ export default function Page() {
       // Save the query to history
       await saveToHistory(question);
 
-      // Process the selected tables - expand "All" to all available tables
-      const effectiveSelectedTables = selectedTables.includes("All") 
-      ? availableTables  // Use all available tables if "All" is selected
-      : selectedTables;  // Otherwise use the specifically selected tables
-
-      const selectedTablesString = effectiveSelectedTables.join(" ");
+      const selectedTablesString = selectedTables.join(" ");
 
       // Prepare the request payload with the selected tables and limit
       const requestBody = {
-        tables: effectiveSelectedTables, // Send the list of selected tables
+        tables: selectedTables, // Send the list of selected tables
         limit: 5 // Set the limit to 5
       };
 

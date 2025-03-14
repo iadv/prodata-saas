@@ -95,16 +95,11 @@ export default function Page() {
       // Save the query to history
       await saveToHistory(question);
 
-      // Process the selected tables - expand "All" to all available tables
-      const effectiveSelectedTables = selectedTables.includes("All") 
-      ? availableTables  // Use all available tables if "All" is selected
-      : selectedTables;  // Otherwise use the specifically selected tables
-
-      const selectedTablesString = effectiveSelectedTables.join(" ");
+      const selectedTablesString = selectedTables.join(" ");
 
       // Prepare the request payload with the selected tables and limit
       const requestBody = {
-        tables: effectiveSelectedTables, // Send the list of selected tables
+        tables: selectedTables, // Send the list of selected tables
         limit: 5 // Set the limit to 5
       };
 
@@ -360,15 +355,14 @@ export default function Page() {
                 setSelectedTables={setSelectedTables}
               />
             </div>
-            <div className="mb-6 flex items-stretch space-x-2">
+            <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-0">
               {/* History Toggle Button */}
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="flex-shrink-0 h-10 w-10 rounded-md shadow-sm"
+                className="flex-shrink-0 mr-2 h-10 w-10 rounded-full shadow-md bg-card hover:bg-card"
                 onClick={() => setIsHistoryOpen(!isHistoryOpen)}
                 aria-label={isHistoryOpen ? "Hide history" : "Show history"}
-                title="View query history"
               >
                 {isHistoryOpen ? 
                   <ChevronLeft className="h-4 w-4" /> : 

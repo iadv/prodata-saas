@@ -1,0 +1,51 @@
+/* These styles can be imported where needed */
+
+/* Base styling for the history sidebar */
+.history-sidebar {
+    position: relative;
+    height: 100%;
+    transition: width 0.3s ease;
+  }
+  
+  /* Toggle button styling */
+  .history-toggle-btn {
+    position: absolute;
+    z-index: 10;
+    border-radius: 9999px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  
+  /* Sidebar content */
+  .history-content {
+    height: 100%;
+    width: 280px;
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+    padding: 1rem;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 640px) {
+    .history-sidebar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      z-index: 20;
+      height: 100%;
+    }
+    
+    .history-toggle-btn {
+      right: -2.5rem;
+    }
+    
+    /* When closed on mobile */
+    .history-sidebar.closed {
+      width: 0;
+      overflow: hidden;
+    }
+    
+    /* When open on mobile */
+    .history-sidebar.open {
+      width: 240px;
+    }
+  }
