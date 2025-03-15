@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { MessageItem } from './message-item';
-import { Message, ConversationHistory } from './types';
+import { Message, ConversationHistory } from './type';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -32,6 +32,8 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
   const [tableRows, setTableRows] = useState<Record<string, any[]> | null>(null);
   const [showRecentQuestions, setShowRecentQuestions] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(1);
   const { toast } = useToast();
 
   // Handler for suggestion clicks
@@ -227,8 +229,17 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
         tableData
       );
       
+      if (typeof query !== 'string') {
+        // Handle the error appropriately
+        toast.error("An error occurred while generating the query.");
+        setLoading(false);
+        return;
+      }
+
       if (!query) {
-        throw new Error('Failed to generate query');
+        toast.error("An error occurred. Please try again.");
+        setLoading(false);
+        return;
       }
       
       const results = await runGenerateSQLQuery(query);

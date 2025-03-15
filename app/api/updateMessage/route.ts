@@ -44,15 +44,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     } catch (sqlError) {
       console.error('SQL Error in chart update:', sqlError);
+    
+      const errorMessage = sqlError instanceof Error ? sqlError.message : 'Unknown database error';
+    
       return NextResponse.json(
-        { error: `Database error: ${sqlError.message}` },
+        { error: `Database error: ${errorMessage}` },
         { status: 500 }
       );
     }
   } catch (error) {
-    console.error('Error updating message chart:', error);
+    console.error('Error generating chart:', error);
+  
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+  
     return NextResponse.json(
-      { error: `Failed to update message chart: ${error.message || 'Unknown error'}` },
+      { error: `Failed to generate chart: ${errorMessage}` },
       { status: 500 }
     );
   }

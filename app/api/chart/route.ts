@@ -92,15 +92,22 @@ export async function POST(request: NextRequest) {
         console.log('Update result:', updateResult.rows);
       } catch (sqlError) {
         console.error('SQL Error in chart update:', sqlError);
-        throw new Error(`Database error: ${sqlError.message}`);
+        if (sqlError instanceof Error) {
+            throw new Error(`Database error: ${sqlError.message}`);
+          } else {
+            throw new Error('Database error: Unknown SQL error');
+          }
       }
     }
     
     return NextResponse.json({ chartConfig });
-  } catch (error) {
+} catch (error) {
     console.error('Error generating chart:', error);
+  
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+  
     return NextResponse.json(
-      { error: `Failed to generate chart: ${error.message || 'Unknown error'}` },
+      { error: `Failed to generate chart: ${errorMessage}` },
       { status: 500 }
     );
   }
