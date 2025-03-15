@@ -229,18 +229,27 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
         tableData
       );
       
-      if (typeof query !== 'string') {
-        // Handle the error appropriately
-        toast.error("An error occurred while generating the query.");
-        setLoading(false);
-        return;
-      }
-
-      if (!query) {
-        toast.error("An error occurred. Please try again.");
-        setLoading(false);
-        return;
-      }
+      // Updated error handling for query generation
+        if (typeof query !== 'string') {
+            // Use your toast implementation
+            toast({
+            title: 'Error',
+            description: 'An error occurred while generating the query.',
+            variant: 'destructive',
+            });
+            setIsProcessing(false);
+            return;
+        }
+        
+        if (!query) {
+            toast({
+            title: 'Error',
+            description: 'An error occurred. Please try again.',
+            variant: 'destructive',
+            });
+            setIsProcessing(false);
+            return;
+        }
       
       const results = await runGenerateSQLQuery(query);
       const columns = results.length > 0 ? Object.keys(results[0]) : [];
