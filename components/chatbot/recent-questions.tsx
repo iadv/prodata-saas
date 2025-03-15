@@ -1,93 +1,116 @@
 'use client';
 
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scrollarea";
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquareText, X } from "lucide-react";
+import React, { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
+import { ConversationHistory } from './type';
 
 interface RecentQuestionsProps {
-  conversations: any[];
+  conversations: ConversationHistory[];
   onQuestionClick: (question: string) => void;
   isVisible: boolean;
   onClose: () => void;
 }
 
-export function RecentQuestions({
-  conversations,
-  onQuestionClick,
-  isVisible,
-  onClose,
+export function RecentQuestions({ 
+  conversations, 
+  onQuestionClick, 
+  isVisible, 
+  onClose 
 }: RecentQuestionsProps) {
+  // Extract unique questions from conversations, most recent first
   const [recentQuestions, setRecentQuestions] = useState<string[]>([]);
-
+  
+  // When conversations change, update the recent questions list
   useEffect(() => {
-    // Extract unique user questions from conversations
-    const allQuestions: string[] = [];
+    // Add debugging output
+    console.log("RecentQuestions received conversations:", conversations?.length);
+    console.log("First few conversations:", conversations?.slice(0, 3).map(c => ({
+      id: c.id,
+      title: c.title,
+      messageCount: c.messages?.length || 0
+    })));
     
-    conversations.forEach(conversation => {
-      const userMessages = conversation.messages?.filter(
-        (message: any) => message.type === 'user'
-      ) || [];
+    if (!conversations || conversations.length === 0) {
+      console.log("No conversations available");
+      setRecentQuestions([]);
+      return;
+    }
+    
+    try {
+      // Extract user messages from all conversations with proper null checks
+      const allUserMessages = conversations
+        .filter(conversation => {
+          const valid = conversation && conversation.messages && Array.isArray(conversation.messages);
+          if (!valid) console.log("Filtered out invalid conversation:", conversation?.id || "unknown");
+          return valid;
+        })
+        .flatMap(conversation => {
+          const userMsgs = conversation.messages
+            .filter(msg => msg && msg.type === 'user' && msg.content)
+            .map(msg => msg.content);
+          
+          console.log(`Conversation ${conversation.id} has ${userMsgs.length} user messages`);
+          return userMsgs;
+        });
       
-      userMessages.forEach((message: any) => {
-        if (message.content && !allQuestions.includes(message.content)) {
-          allQuestions.push(message.content);
+      console.log("Total user messages found:", allUserMessages.length);
+      
+      // Get unique questions, preserving latest occurrences
+      const uniqueQuestions: string[] = [];
+      // Process in reverse to get most recent first
+      [...allUserMessages].reverse().forEach(question => {
+        if (question && !uniqueQuestions.includes(question)) {
+          uniqueQuestions.push(question);
         }
       });
-    });
-    
-    // Take the 10 most recent questions
-    setRecentQuestions(allQuestions.slice(0, 10));
+      
+      console.log("Unique questions count:", uniqueQuestions.length);
+      console.log("First few unique questions:", uniqueQuestions.slice(0, 3));
+      
+      // Limit to top 20 questions
+      setRecentQuestions(uniqueQuestions.slice(0, 20));
+    } catch (error) {
+      console.error("Error processing recent questions:", error);
+      setRecentQuestions([]);
+    }
   }, [conversations]);
 
+  // Add debugging in the render function
+  console.log("RecentQuestions rendering, showing:", recentQuestions.length, "questions");
+  console.log("isVisible:", isVisible);
+
+  if (!isVisible) return null;
+
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.2 }}
-          className="w-full border-b bg-background"
-        >
-          <div className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <MessageSquareText className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-medium">Recent Questions</h3>
-            </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-6 w-6" 
-              onClick={onClose}
+    <div className="absolute top-12 left-0 right-0 bg-white dark:bg-gray-800 z-10 border-b shadow-md p-4">
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="text-sm font-medium">Recent Questions ({recentQuestions.length})</h3>
+        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onClose}>
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+      
+      {recentQuestions.length === 0 ? (
+        <p className="text-sm text-gray-500 text-center py-2">No recent questions yet.</p>
+      ) : (
+        <div className="space-y-1 max-h-[200px] overflow-y-auto">
+          {recentQuestions.map((question, index) => (
+            <Button
+              key={`recent-${index}`}
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-left text-xs truncate"
+              onClick={() => {
+                onQuestionClick(question);
+                onClose();
+              }}
             >
-              <X className="h-4 w-4" />
+              {question}
             </Button>
-          </div>
-          <ScrollArea className="pb-4 px-4 max-h-[200px]">
-            <div className="flex flex-col gap-2">
-              {recentQuestions.length > 0 ? (
-                recentQuestions.map((question, index) => (
-                  <Button
-                    key={index}
-                    variant="ghost"
-                    size="sm"
-                    className="justify-start text-sm h-auto py-2 text-left whitespace-normal"
-                    onClick={() => onQuestionClick(question)}
-                  >
-                    {question}
-                  </Button>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground px-2">
-                  No recent questions found.
-                </p>
-              )}
-            </div>
-          </ScrollArea>
-        </motion.div>
+          ))}
+        </div>
       )}
-    </AnimatePresence>
+    </div>
   );
 }

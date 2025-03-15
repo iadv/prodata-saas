@@ -12,7 +12,7 @@ import {
   MessageSquareText 
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { generateQuery, runGenerateSQLQuery, detectQueryIntent, generateConversation } from '@/app/(dashboard)/dashboard/vercelchat/actions';
+import { generateQuery, runGenerateSQLQuery } from '@/app/(dashboard)/dashboard/vercelchat/actions';
 import { v4 as uuidv4 } from 'uuid';
 import { ConversationSidebar } from './conversation-sidebar';
 import { SuggestedQueries } from '@/components/vercelchat/suggested-queries';
@@ -35,15 +35,6 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(1);
   const { toast } = useToast();
-  
-  // Default suggested questions if SuggestedQueries component needs them
-  const defaultQuestions = [
-    "Show me top sales by region",
-    "What was total revenue last quarter?",
-    "Compare monthly trends",
-    "Which customers have highest lifetime value?",
-    "Show product performance year over year"
-  ];
 
   // Handler for suggestion clicks
   const handleSuggestionClick = (suggestion: string) => {
@@ -71,20 +62,7 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
         throw new Error('Failed to fetch conversations');
       }
       const data = await response.json();
-      
-      console.log("Fetched conversations:", data.length);
-      
-      // Make sure each conversation has a valid messages array
-      const validConversations = data.map(conversation => ({
-        ...conversation,
-        messages: Array.isArray(conversation.messages) ? conversation.messages : [],
-        createdAt: new Date(conversation.createdAt),
-        updatedAt: new Date(conversation.updatedAt),
-      }));
-      
-      console.log("Validated conversations:", validConversations.length);
-      
-      setConversations(validConversations);
+      setConversations(data);
     } catch (error) {
       console.error('Error fetching conversations:', error);
       toast({
@@ -102,13 +80,7 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
         throw new Error('Failed to fetch conversation');
       }
       const conversation = await response.json();
-      
-      // Ensure messages array is valid
-      const validMessages = Array.isArray(conversation.messages) 
-        ? conversation.messages 
-        : [];
-      
-      setMessages(validMessages);
+      setMessages(conversation.messages);
       setCurrentConversationId(conversation.id);
     } catch (error) {
       console.error('Error fetching conversation:', error);
@@ -143,41 +115,28 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
       if (isNewConversation) {
         setCurrentConversationId(data.id);
         // Add the new conversation to the list
-        setConversations((prev) => {
-          // Create a new conversation object with the current message
-          const newConversation = {
+        setConversations((prev) => [
+          {
             id: data.id,
             title: data.title,
-            messages: [message], // Initialize with current message
+            messages: [message],
             createdAt: new Date(data.createdAt),
             updatedAt: new Date(data.updatedAt),
-          };
-          console.log("Adding new conversation:", data.id);
-          return [newConversation, ...prev];
-        });
+          },
+          ...prev,
+        ]);
       } else {
-        // Update conversation in the list by appending the message
-        setConversations((prev) => {
-          // Find the conversation to update
-          const updated = prev.map((conv) => {
-            if (conv.id === currentConversationId) {
-              // Get existing messages or initialize empty array
-              const existingMessages = Array.isArray(conv.messages) ? [...conv.messages] : [];
-              
-              // Create updated conversation with new message appended
-              return {
-                ...conv,
-                // Append the message to existing messages
-                messages: [...existingMessages, message],
-                updatedAt: new Date(data.updatedAt),
-              };
-            }
-            return conv;
-          });
-          
-          console.log("Updated conversation:", currentConversationId);
-          return updated;
-        });
+        // Update conversation in the list
+        setConversations((prev) =>
+          prev.map((conv) =>
+            conv.id === currentConversationId
+              ? {
+                  ...conv,
+                  updatedAt: new Date(data.updatedAt),
+                }
+              : conv
+          )
+        );
       }
     } catch (error) {
       console.error('Error saving conversation:', error);
@@ -189,53 +148,6 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
     }
   };
 
-  // Helper function to fetch all available tables
-  const fetchAllTables = async (): Promise<string[]> => {
-    try {
-      const tablesResponse = await fetch('/api/tables');
-      if (tablesResponse.ok) {
-        const tables = await tablesResponse.json();
-        // Filter out system tables if needed
-        return tables.filter((table: string) => 
-          table !== "library" && table !== "historical"
-        );
-      }
-      return [];
-    } catch (error) {
-      console.error("Error fetching all tables:", error);
-      return [];
-    }
-  };
-  
-  // Helper function to extract and format table structure from sample data
-  const formatTableStructure = (tableData: Record<string, any[]>): string => {
-    let result = "Available tables and their columns:\n\n";
-    
-    // For each table
-    Object.keys(tableData).forEach(tableName => {
-      result += `Table: ${tableName}\n`;
-      
-      // If table has sample rows, extract column names
-      if (tableData[tableName] && tableData[tableName].length > 0) {
-        const columns = Object.keys(tableData[tableName][0]);
-        result += `Columns: ${columns.join(", ")}\n`;
-        
-        // Add sample values for each column (from first row)
-        result += "Sample values:\n";
-        columns.forEach(column => {
-          const sampleValue = tableData[tableName][0][column];
-          result += `  - ${column}: ${sampleValue}\n`;
-        });
-      } else {
-        result += "No sample data available for this table.\n";
-      }
-      
-      result += "\n";
-    });
-    
-    return result;
-  };
-  
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isProcessing) return;
     
@@ -277,180 +189,93 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
       // Save user message
       await createOrUpdateConversation(userMessage, isNewConversation);
       
-      // Get all available tables (needed if "All" is selected)
-      let effectiveSelectedTables: string[] = [...selectedTables];
-      
-      // If "All" is selected, expand it to include all available tables
+      // Get all available tables first (needed if "All" is selected)
+      let allAvailableTables: string[] = [];
       if (selectedTables.includes("All")) {
-        const allAvailableTables = await fetchAllTables();
-        effectiveSelectedTables = allAvailableTables;
-        console.log("Expanded 'All' to tables:", effectiveSelectedTables);
+        try {
+          const tablesResponse = await fetch('/api/tables');
+          if (tablesResponse.ok) {
+            const tables = await tablesResponse.json();
+            // Filter out system tables if needed
+            allAvailableTables = tables.filter((table: string) => 
+              table !== "library" && table !== "historical"
+            );
+          }
+        } catch (error) {
+          console.error("Error fetching all tables:", error);
+        }
       }
+      
+      // Process the selected tables - expand "All" to all available tables
+      const effectiveSelectedTables = selectedTables.includes("All") 
+        ? allAvailableTables  // Use all available tables if "All" is selected
+        : selectedTables;     // Otherwise use the specifically selected tables
       
       // Fetch table data for context
       const tableData = await fetchTopRows(effectiveSelectedTables);
-      console.log("Fetched table data keys:", Object.keys(tableData));
+      setTableRows(tableData);
       
-      // Format the column information (table structure) from the sample rows
-      const structuredColumnInfo = formatTableStructure(tableData);
-      console.log("Structured column info:", structuredColumnInfo.substring(0, 200) + "...");
-      
-      // Fetch context columns for all selected tables (for backward compatibility)
+      // Fetch context columns for all selected tables
       const contextColumns = await fetchContextColumns(effectiveSelectedTables);
-      
-      // Combine both types of column information for more robust context
-      const enhancedContext = `${structuredColumnInfo}\n\nAdditional column info: ${contextColumns}`;
       
       // Join tables for query generation
       const selectedTablesString = effectiveSelectedTables.join(" ");
       
-      // Prepare chat history for context
-      const recentMessages = messages.slice(-5); // Get last 5 messages
-      const chatHistory = recentMessages.map(msg => ({
-        role: msg.type,
-        content: msg.content
-      }));
-  
-      // Determine if this is a query request or just a conversation
-      const intentResult = await detectQueryIntent(
+      // Generate and run SQL query
+      const query = await generateQuery(
         inputValue, 
-        enhancedContext, 
+        contextColumns, 
         selectedTablesString, 
-        tableData,
-        chatHistory
+        tableData
       );
       
-      console.log("Intent detection result:", intentResult);
-      
-      if (intentResult.intent === "CONVERSATION") {
-        // Handle as conversational response
-        console.log("Handling as conversation");
-        try {
-          const response = await generateConversation(
-            inputValue,
-            enhancedContext,
-            selectedTablesString,
-            tableData,
-            chatHistory
-          );
-          
-          console.log("Conversation response received:", response ? response.substring(0, 100) + "..." : "No response");
-          
-          // Update assistant message with conversational response
-          const updatedAssistantMessage: Message = {
-            ...assistantMessage,
-            isLoading: false,
-            content: response || "I'm not sure how to respond to that. Could you try asking something related to your data?"
-          };
-          
-          // Update UI
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === assistantMessage.id ? updatedAssistantMessage : msg
-            )
-          );
-          
-          // Save assistant message
-          await createOrUpdateConversation(updatedAssistantMessage, false);
-        } catch (conversationError) {
-          console.error("Error in conversation handling:", conversationError);
-          
-          // Handle conversation errors specifically
-          const errorMessage: Message = {
-            ...assistantMessage,
-            isLoading: false,
-            content: "I can help answer general questions as well as questions about your data. What would you like to know?",
-            error: conversationError instanceof Error ? conversationError.message : "Unknown error in conversation"
-          };
-          
-          setMessages((prev) =>
-            prev.map((msg) => msg.id === assistantMessage.id ? errorMessage : msg)
-          );
-          
-          await createOrUpdateConversation(errorMessage, false);
-        }
-      } else {
-        // This is a query request, proceed with the existing flow
-        // Generate and run SQL query
-        const query = await generateQuery(
-          inputValue, 
-          enhancedContext, 
-          selectedTablesString, 
-          tableData
-        );
-        
-        // Updated error handling for query generation
+      // Updated error handling for query generation
         if (typeof query !== 'string') {
-          toast({
+            // Use your toast implementation
+            toast({
             title: 'Error',
             description: 'An error occurred while generating the query.',
             variant: 'destructive',
-          });
-          
-          const errorMessage: Message = {
-            ...assistantMessage,
-            isLoading: false,
-            content: 'I encountered an error while generating a database query for your question.',
-            error: 'Failed to generate query'
-          };
-          
-          setMessages((prev) =>
-            prev.map((msg) => msg.id === assistantMessage.id ? errorMessage : msg)
-          );
-          
-          await createOrUpdateConversation(errorMessage, false);
-          setIsProcessing(false);
-          return;
+            });
+            setIsProcessing(false);
+            return;
         }
         
         if (!query) {
-          toast({
+            toast({
             title: 'Error',
             description: 'An error occurred. Please try again.',
             variant: 'destructive',
-          });
-          
-          const errorMessage: Message = {
-            ...assistantMessage,
-            isLoading: false,
-            content: 'I couldn\'t generate a suitable query for your question. Could you try rephrasing it?',
-            error: 'Empty query generated'
-          };
-          
-          setMessages((prev) =>
-            prev.map((msg) => msg.id === assistantMessage.id ? errorMessage : msg)
-          );
-          
-          await createOrUpdateConversation(errorMessage, false);
-          setIsProcessing(false);
-          return;
+            });
+            setIsProcessing(false);
+            return;
         }
-        
-        const results = await runGenerateSQLQuery(query);
-        const columns = results.length > 0 ? Object.keys(results[0]) : [];
-        
-        // Update assistant message with results
-        const updatedAssistantMessage: Message = {
-          ...assistantMessage,
-          isLoading: false,
-          content: `Based on your request, I've analyzed the data and found the following results:`,
-          tableData: {
-            columns,
-            rows: results,
-          },
-          rawQuery: query,
-        };
-        
-        // Update UI
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === assistantMessage.id ? updatedAssistantMessage : msg
-          )
-        );
-        
-        // Save assistant message
-        await createOrUpdateConversation(updatedAssistantMessage, false);
-      }
+      
+      const results = await runGenerateSQLQuery(query);
+      const columns = results.length > 0 ? Object.keys(results[0]) : [];
+      
+      // Update assistant message with results
+      const updatedAssistantMessage: Message = {
+        ...assistantMessage,
+        isLoading: false,
+        content: `Based on your request, I've analyzed the data and found the following results:`,
+        tableData: {
+          columns,
+          rows: results,
+        },
+        rawQuery: query,
+      };
+      
+      // Update UI
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMessage.id ? updatedAssistantMessage : msg
+        )
+      );
+      
+      // Save assistant message
+      await createOrUpdateConversation(updatedAssistantMessage, false);
+      
     } catch (error) {
       console.error('Error processing query:', error);
       
@@ -580,15 +405,13 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
 
   const fetchTopRows = async (tables: string[]): Promise<Record<string, any[]>> => {
     try {
-      console.log("Fetching top rows for tables:", tables);
-      
       const response = await fetch('/api/fetchTopRows', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          tables: tables, // Pass the expanded list of tables
+          tables: tables, // Pass the already expanded list of tables
           limit: 5,
         }),
       });
@@ -598,7 +421,6 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
       }
   
       const data = await response.json();
-      console.log("Received table rows for:", Object.keys(data.rows || {}));
       return data.rows || {};
     } catch (error) {
       console.error('Error fetching top rows:', error);
@@ -626,11 +448,7 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
           }
   
           const data = await res.json();
-          
-          if (data.columns && data.columns.length > 0) {
-            return `Table ${table}: ${data.columns.join(', ')}`;
-          }
-          return '';
+          return data.columns ? data.columns.join(' ') : '';
         } catch (error) {
           console.error(`Error fetching columns for table ${table}:`, error);
           return '';
@@ -640,8 +458,8 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
       // Wait for all promises to resolve
       const columnsPerTable = await Promise.all(selectedTableColumnsPromises);
       
-      // Filter out empty strings and join with newlines for better readability
-      return columnsPerTable.filter(text => text.length > 0).join('\n');
+      // Join all columns into a single string
+      return columnsPerTable.join(' ');
     } catch (error) {
       console.error('Error fetching context columns:', error);
       return '';
@@ -649,31 +467,7 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
   };
 
   const toggleRecentQuestions = () => {
-    const newState = !showRecentQuestions;
-    console.log("Toggling recent questions to:", newState, 
-              "Conversations available:", conversations.length);
-    setShowRecentQuestions(newState);
-  };
-
-  // Add fallback custom suggestions component in case the original component fails
-  const FallbackSuggestions = () => {
-    return (
-      <div className="text-center">
-        <h3 className="text-lg font-medium mb-4">Try asking questions like:</h3>
-        <div className="flex flex-wrap justify-center gap-2">
-          {defaultQuestions.map((question, idx) => (
-            <Button
-              key={idx}
-              variant="outline"
-              className="text-sm"
-              onClick={() => handleSuggestionClick(question)}
-            >
-              {question}
-            </Button>
-          ))}
-        </div>
-      </div>
-    );
+    setShowRecentQuestions(prev => !prev);
   };
 
   return (
@@ -721,27 +515,11 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
                   You can request specific information, comparisons, or trends.
                 </p>
                 
-                {/* Error boundary for SuggestedQueries */}
-                <div className="w-full">
-                  {(() => {
-                    try {
-                      // The original way - pass minimal props to avoid any undefined issues
-                      return (
-                        <SuggestedQueries 
-                          handleSuggestionClick={handleSuggestionClick}
-                          // Only pass schemaName if selectedTables[0] is not "All"
-                          {...(selectedTables[0] !== "All" && { schemaName: selectedTables[0] })}
-                          // Add any props the component might need but that we haven't defined
-                          websiteQuestions={defaultQuestions}
-                          mobileQuestions={defaultQuestions.map(q => q.split(' ').slice(0, 3).join(' '))}
-                        />
-                      );
-                    } catch (e) {
-                      console.error("Error rendering SuggestedQueries:", e);
-                      return <FallbackSuggestions />;
-                    }
-                  })()}
-                </div>
+                {/* Use SuggestedQueries component */}
+                <SuggestedQueries 
+                  handleSuggestionClick={handleSuggestionClick} 
+                  schemaName={selectedTables[0] === "All" ? undefined : selectedTables[0]}
+                />
               </div>
             ) : (
               <>

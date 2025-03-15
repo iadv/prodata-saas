@@ -71,20 +71,7 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
         throw new Error('Failed to fetch conversations');
       }
       const data = await response.json();
-      
-      console.log("Fetched conversations:", data.length);
-      
-      // Make sure each conversation has a valid messages array
-      const validConversations = data.map(conversation => ({
-        ...conversation,
-        messages: Array.isArray(conversation.messages) ? conversation.messages : [],
-        createdAt: new Date(conversation.createdAt),
-        updatedAt: new Date(conversation.updatedAt),
-      }));
-      
-      console.log("Validated conversations:", validConversations.length);
-      
-      setConversations(validConversations);
+      setConversations(data);
     } catch (error) {
       console.error('Error fetching conversations:', error);
       toast({
@@ -102,13 +89,7 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
         throw new Error('Failed to fetch conversation');
       }
       const conversation = await response.json();
-      
-      // Ensure messages array is valid
-      const validMessages = Array.isArray(conversation.messages) 
-        ? conversation.messages 
-        : [];
-      
-      setMessages(validMessages);
+      setMessages(conversation.messages);
       setCurrentConversationId(conversation.id);
     } catch (error) {
       console.error('Error fetching conversation:', error);
@@ -143,41 +124,28 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
       if (isNewConversation) {
         setCurrentConversationId(data.id);
         // Add the new conversation to the list
-        setConversations((prev) => {
-          // Create a new conversation object with the current message
-          const newConversation = {
+        setConversations((prev) => [
+          {
             id: data.id,
             title: data.title,
-            messages: [message], // Initialize with current message
+            messages: [message],
             createdAt: new Date(data.createdAt),
             updatedAt: new Date(data.updatedAt),
-          };
-          console.log("Adding new conversation:", data.id);
-          return [newConversation, ...prev];
-        });
+          },
+          ...prev,
+        ]);
       } else {
-        // Update conversation in the list by appending the message
-        setConversations((prev) => {
-          // Find the conversation to update
-          const updated = prev.map((conv) => {
-            if (conv.id === currentConversationId) {
-              // Get existing messages or initialize empty array
-              const existingMessages = Array.isArray(conv.messages) ? [...conv.messages] : [];
-              
-              // Create updated conversation with new message appended
-              return {
-                ...conv,
-                // Append the message to existing messages
-                messages: [...existingMessages, message],
-                updatedAt: new Date(data.updatedAt),
-              };
-            }
-            return conv;
-          });
-          
-          console.log("Updated conversation:", currentConversationId);
-          return updated;
-        });
+        // Update conversation in the list
+        setConversations((prev) =>
+          prev.map((conv) =>
+            conv.id === currentConversationId
+              ? {
+                  ...conv,
+                  updatedAt: new Date(data.updatedAt),
+                }
+              : conv
+          )
+        );
       }
     } catch (error) {
       console.error('Error saving conversation:', error);
@@ -293,7 +261,7 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
       
       // Format the column information (table structure) from the sample rows
       const structuredColumnInfo = formatTableStructure(tableData);
-      console.log("Structured column info:", structuredColumnInfo.substring(0, 200) + "...");
+      console.log("Structured column info:", structuredColumnInfo);
       
       // Fetch context columns for all selected tables (for backward compatibility)
       const contextColumns = await fetchContextColumns(effectiveSelectedTables);
@@ -649,10 +617,7 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
   };
 
   const toggleRecentQuestions = () => {
-    const newState = !showRecentQuestions;
-    console.log("Toggling recent questions to:", newState, 
-              "Conversations available:", conversations.length);
-    setShowRecentQuestions(newState);
+    setShowRecentQuestions(prev => !prev);
   };
 
   // Add fallback custom suggestions component in case the original component fails
