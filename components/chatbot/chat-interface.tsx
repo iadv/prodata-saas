@@ -22,6 +22,17 @@ interface ChatInterfaceProps {
   selectedTables: string[];
 }
 
+// Create a new type that extends SuggestedQueries props to make TypeScript happy
+interface SuggestedQueriesWithExtras {
+  handleSuggestionClick: (suggestion: string) => void;
+  schemaName?: string;
+  websiteQuestions: string[];
+  mobileQuestions: string[];
+}
+
+// Patch the imported SuggestedQueries component with the extended type
+const ExtendedSuggestedQueries = SuggestedQueries as unknown as React.FC<SuggestedQueriesWithExtras>;
+
 export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -36,13 +47,28 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
   const [loadingStep, setLoadingStep] = useState(1);
   const { toast } = useToast();
   
-  // Default suggested questions if SuggestedQueries component needs them
+  // Default suggested questions for website and mobile formats
   const defaultQuestions = [
-    "Show me top sales by region",
-    "What was total revenue last quarter?",
-    "Compare monthly trends",
-    "Which customers have highest lifetime value?",
-    "Show product performance year over year"
+    {
+      desktop: "Show me top sales by region",
+      mobile: "Top sales by region"
+    },
+    {
+      desktop: "What was total revenue last quarter?",
+      mobile: "Last quarter revenue"
+    },
+    {
+      desktop: "Compare monthly trends for all products",
+      mobile: "Monthly trends"
+    },
+    {
+      desktop: "Which customers have highest lifetime value?",
+      mobile: "Top customers"
+    },
+    {
+      desktop: "Show product performance year over year",
+      mobile: "YoY performance"
+    }
   ];
 
   // Handler for suggestion clicks
@@ -75,11 +101,13 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
       console.log("Fetched conversations:", data.length);
       
       // Make sure each conversation has a valid messages array
-      const validConversations = data.map(conversation => ({
+      const validConversations = data.map((conversation: Partial<ConversationHistory>) => ({
         ...conversation,
         messages: Array.isArray(conversation.messages) ? conversation.messages : [],
-        createdAt: new Date(conversation.createdAt),
-        updatedAt: new Date(conversation.updatedAt),
+        createdAt: conversation.createdAt ? new Date(conversation.createdAt) : new Date(),
+        updatedAt: conversation.updatedAt ? new Date(conversation.updatedAt) : new Date(),
+        id: conversation.id || '',
+        title: conversation.title || 'Untitled Conversation',
       }));
       
       console.log("Validated conversations:", validConversations.length);
@@ -666,9 +694,10 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
               key={idx}
               variant="outline"
               className="text-sm"
-              onClick={() => handleSuggestionClick(question)}
+              onClick={() => handleSuggestionClick(question.desktop)}
             >
-              {question}
+              <span className="sm:hidden">{question.mobile}</span>
+              <span className="hidden sm:inline">{question.desktop}</span>
             </Button>
           ))}
         </div>
@@ -725,15 +754,13 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
                 <div className="w-full">
                   {(() => {
                     try {
-                      // The original way - pass minimal props to avoid any undefined issues
+                      // Pass props to SuggestedQueries including websiteQuestions and mobileQuestions
                       return (
-                        <SuggestedQueries 
+                        <ExtendedSuggestedQueries 
                           handleSuggestionClick={handleSuggestionClick}
-                          // Only pass schemaName if selectedTables[0] is not "All"
                           {...(selectedTables[0] !== "All" && { schemaName: selectedTables[0] })}
-                          // Add any props the component might need but that we haven't defined
-                          websiteQuestions={defaultQuestions}
-                          mobileQuestions={defaultQuestions.map(q => q.split(' ').slice(0, 3).join(' '))}
+                          websiteQuestions={defaultQuestions.map(q => q.desktop)}
+                          mobileQuestions={defaultQuestions.map(q => q.mobile)}
                         />
                       );
                     } catch (e) {
