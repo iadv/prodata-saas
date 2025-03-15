@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Message } from './types';
+import { Message } from './type'; //fixed
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { DataTable } from './data-table';
