@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Users, Settings, Shield, Activity, Menu } from 'lucide-react';
+import { Users, Settings, Shield, Activity, Menu, MessageSquare, Database, BarChart } from 'lucide-react';
 
 export default function DashboardLayout({
   children,
@@ -16,8 +16,9 @@ export default function DashboardLayout({
 
   const navItems = [
     { href: '/dashboard', icon: Users, label: 'Team' },
-    { href: '/dashboard/vercelchat', icon: Users, label: 'Chat' },
-    { href: '/dashboard/upload', icon: Users, label: 'Upload data' },
+    { href: '/dashboard/vercelchat', icon: BarChart, label: 'Data Analysis (Beta)' },
+    { href: '/dashboard/chatbot', icon: MessageSquare, label: 'AI Chat Interface (Beta)' },
+    { href: '/dashboard/upload', icon: Database, label: 'Upload data' },
     { href: '/dashboard/general', icon: Settings, label: 'General' },
     { href: '/dashboard/activity', icon: Activity, label: 'Activity' },
     { href: '/dashboard/security', icon: Shield, label: 'Security' },
