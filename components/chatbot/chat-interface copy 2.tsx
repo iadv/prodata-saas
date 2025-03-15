@@ -697,8 +697,8 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
                           // Only pass schemaName if selectedTables[0] is not "All"
                           {...(selectedTables[0] !== "All" && { schemaName: selectedTables[0] })}
                           // Add any props the component might need but that we haven't defined
-                          websiteQuestions={defaultQuestions}
-                          mobileQuestions={defaultQuestions.map(q => q.split(' ').slice(0, 3).join(' '))}
+                          // websiteQuestions={defaultQuestions}
+                         //  mobileQuestions={defaultQuestions.map(q => q.split(' ').slice(0, 3).join(' '))}
                         />
                       );
                     } catch (e) {
