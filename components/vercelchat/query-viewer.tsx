@@ -1,15 +1,13 @@
-type QueryExplanation1 = {
-  section: string;
-  explanation: string;
-};
-
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { QueryWithTooltips } from "./ui/query-with-tooltips";
 import { explainQuery } from "@/app/(dashboard)/dashboard/vercelchat/actions";
-import { QueryExplanation } from "@/lib/types";
 import { CircleHelp, Loader2 } from "lucide-react";
 
+type QueryExplanation1 = {
+  section: string;
+  explanation: string;
+};
 
 export const QueryViewer = ({
   activeQuery,
@@ -20,7 +18,7 @@ export const QueryViewer = ({
 }) => {
   const activeQueryCutoff = 100;
 
-  const [queryExplanations, setQueryExplanations] = useState<QueryExplanation1[] | null>(null); // Change this to string[]
+  const [queryExplanations, setQueryExplanations] = useState<QueryExplanation1[] | null>(null);
   const [loadingExplanation, setLoadingExplanation] = useState(false);
   const [queryExpanded, setQueryExpanded] = useState(activeQuery.length > activeQueryCutoff);
 
@@ -28,9 +26,27 @@ export const QueryViewer = ({
     setQueryExpanded(true);
     setLoadingExplanation(true);
     
-    const explanations = await explainQuery(inputValue, activeQuery);
-    setQueryExplanations(explanations);
-    setLoadingExplanation(false);
+    try {
+      const response = await explainQuery(inputValue, activeQuery);
+      
+      // Fix the type mismatch - extract explanations array from the response
+      if (response && 'explanations' in response && Array.isArray(response.explanations)) {
+        // The response has an explanations property that is an array
+        setQueryExplanations(response.explanations);
+      } else if (Array.isArray(response)) {
+        // The response is already an array
+        setQueryExplanations(response);
+      } else {
+        // Handle unexpected response format
+        console.error("Unexpected response format from explainQuery:", response);
+        setQueryExplanations(null);
+      }
+    } catch (error) {
+      console.error("Error explaining query:", error);
+      setQueryExplanations(null);
+    } finally {
+      setLoadingExplanation(false);
+    }
   };
 
   if (activeQuery.length === 0) return null;
