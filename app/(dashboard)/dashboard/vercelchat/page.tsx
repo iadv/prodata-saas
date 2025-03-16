@@ -53,7 +53,7 @@ export default function Page() {
         
         // Filter out the "library" and "historical" tables
         const filteredTables = data.filter((table: string) => 
-          table !== "library" && table !== "historical"
+          table !== "library" && table !== "historical" && table !== "chatbot_historical" && table !== "messages" && table !== "conversations"
         );
 
         setAvailableTables(filteredTables);

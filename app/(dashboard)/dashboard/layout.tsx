@@ -15,13 +15,15 @@ export default function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const navItems = [
-    { href: '/dashboard', icon: Users, label: 'Team' },
+
+    { href: '/dashboard/upload', icon: Database, label: 'Upload data' },
     { href: '/dashboard/vercelchat', icon: BarChart, label: 'Data Analysis (Beta)' },
     { href: '/dashboard/chatbot', icon: MessageSquare, label: 'AI Chat Interface (Beta)' },
-    { href: '/dashboard/upload', icon: Database, label: 'Upload data' },
     { href: '/dashboard/general', icon: Settings, label: 'General' },
-    { href: '/dashboard/activity', icon: Activity, label: 'Activity' },
+    { href: '/dashboard', icon: Users, label: 'Team' },
     { href: '/dashboard/security', icon: Shield, label: 'Security' },
+    { href: '/dashboard/activity', icon: Activity, label: 'Activity' },
+
   ];
 
   return (

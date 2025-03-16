@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ConversationHistory } from './type';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scrollarea';
 import { 
   MessageSquare, 
   PlusCircle, 
-  Trash2,
+  Trash2, 
   ChevronLeft, 
   ChevronRight 
 } from 'lucide-react';
@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 
 interface ConversationSidebarProps {
+  conversations: ConversationHistory[];
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onNewConversation: () => void;
@@ -24,6 +25,7 @@ interface ConversationSidebarProps {
 }
 
 export function ConversationSidebar({
+  conversations,
   onSelect,
   onDelete,
   onNewConversation,
@@ -31,56 +33,7 @@ export function ConversationSidebar({
   onToggle,
   selectedConversationId
 }: ConversationSidebarProps) {
-  const [conversations, setConversations] = useState<ConversationHistory[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
-
-  // Fetch conversations when component mounts or isOpen changes
-  useEffect(() => {
-    if (isOpen) {
-      fetchConversations();
-    }
-  }, [isOpen]);
-
-  // Refresh conversations periodically when sidebar is open
-  useEffect(() => {
-    if (!isOpen) return;
-    
-    const interval = setInterval(() => {
-      fetchConversations();
-    }, 30000); // Refresh every 30 seconds
-    
-    return () => clearInterval(interval);
-  }, [isOpen]);
-
-  const fetchConversations = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch('/api/conversation');
-      
-      if (!response.ok) {
-        console.error('Failed to fetch conversations:', response.status);
-        return;
-      }
-      
-      const data = await response.json();
-      
-      // Transform API data to match your ConversationHistory type
-      const conversationsData = data.map((item: any) => ({
-        id: item.id,
-        title: item.title || "New conversation",
-        updatedAt: new Date(item.updated_at),
-        createdAt: new Date(item.created_at),
-        messages: [] // Initialize with empty messages array
-      }));
-      
-      setConversations(conversationsData);
-    } catch (error) {
-      console.error('Error fetching conversations:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const formatDate = (date: Date) => {
     const now = new Date();
@@ -98,36 +51,14 @@ export function ConversationSidebar({
       }).format(date);
     }
   };
-  
-  const handleDelete = async (id: string) => {
-    try {
-      const response = await fetch(`/api/conversation?id=${id}`, {
-        method: 'DELETE',
-      });
-      
-      if (response.ok) {
-        // Update local state after successful deletion
-        setConversations(prevConversations => 
-          prevConversations.filter(conv => conv.id !== id)
-        );
-        onDelete(id);
-      } else {
-        console.error('Failed to delete conversation:', response.status);
-      }
-    } catch (error) {
-      console.error('Error deleting conversation:', error);
-    }
-    
-    setConfirmDelete(null);
-  };
 
   return (
-    <div className="relative h-full">
-      {/* Toggle button that works on both mobile and desktop */}
+    <>
+      {/* Toggle button for mobile */}
       <Button
         variant="outline"
         size="icon"
-        className="absolute top-2 left-2 z-20"
+        className="absolute top-2 left-2 z-20 md:hidden"
         onClick={onToggle}
       >
         {isOpen ? (
@@ -158,17 +89,13 @@ export function ConversationSidebar({
             </div>
             
             <ScrollArea className="h-[calc(100%-65px)]">
-              {isLoading && conversations.length === 0 ? (
-                <div className="flex justify-center items-center h-20">
-                  <div className="animate-spin h-5 w-5 border-2 border-border border-t-primary rounded-full" />
-                </div>
-              ) : conversations.length === 0 ? (
-                <div className="text-center py-4 text-sm text-gray-500">
-                  No conversations yet
-                </div>
-              ) : (
-                <div className="p-2">
-                  {conversations.map((conversation) => (
+              <div className="p-2">
+                {conversations.length === 0 ? (
+                  <div className="text-center py-4 text-sm text-gray-500">
+                    No conversations yet
+                  </div>
+                ) : (
+                  conversations.map((conversation) => (
                     <div 
                       key={conversation.id}
                       className="mb-1 relative"
@@ -200,7 +127,8 @@ export function ConversationSidebar({
                               className="h-7 px-2"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDelete(conversation.id);
+                                onDelete(conversation.id);
+                                setConfirmDelete(null);
                               }}
                             >
                               Confirm
@@ -232,13 +160,13 @@ export function ConversationSidebar({
                         )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                  ))
+                )}
+              </div>
             </ScrollArea>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }

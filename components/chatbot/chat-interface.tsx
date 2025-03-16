@@ -14,9 +14,11 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { generateQuery, runGenerateSQLQuery, detectQueryIntent, generateConversation } from '@/app/(dashboard)/dashboard/vercelchat/actions';
 import { v4 as uuidv4 } from 'uuid';
-import { ConversationSidebar } from './conversation-sidebar';
+// import { ConversationSidebar } from './conversation-sidebar';
 import { SuggestedQueries } from '@/components/vercelchat/suggested-queries';
 import { RecentQuestions } from './recent-questions';
+// Near the top of your file, import the utility
+import { saveToHistory } from './api-utils'; // Adjust the path as needed
 
 interface ChatInterfaceProps {
   selectedTables: string[];
@@ -77,9 +79,9 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
   };
 
   // Fetch conversations on component mount
-  useEffect(() => {
-    fetchConversations();
-  }, []);
+  // useEffect(() => {
+  //   fetchConversations();
+  // }, []);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -266,7 +268,7 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
   
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isProcessing) return;
-    
+  
     if (selectedTables.length === 0) {
       toast({
         title: 'No tables selected',
@@ -300,7 +302,10 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
     // Update UI immediately
     setMessages((prev) => [...prev, userMessage, assistantMessage]);
     setInputValue('');
-  
+    
+    // Save to history quietly - don't await this to prevent blocking
+    saveToHistory(userMessage.content).catch(error => console.error('Error saving to history:', error));
+
     try {
       // Save user message
       await createOrUpdateConversation(userMessage, isNewConversation);
@@ -722,7 +727,6 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
       
       {/* Recent Questions Panel */}
       <RecentQuestions
-        conversations={conversations}
         onQuestionClick={handleSuggestionClick}
         isVisible={showRecentQuestions}
         onClose={() => setShowRecentQuestions(false)}
@@ -730,15 +734,6 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
       
       {/* Main Chat Area */}
       <div className="flex flex-1 h-full overflow-hidden">
-        <ConversationSidebar
-          conversations={conversations}
-          onSelect={handleConversationSelect}
-          onDelete={handleDeleteConversation}
-          onNewConversation={startNewConversation}
-          isOpen={isSidebarOpen}
-          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-          selectedConversationId={currentConversationId}
-        />
         
         <div className="flex-1 flex flex-col h-full overflow-hidden">
           <div className="flex-1 overflow-y-auto px-4 py-2">

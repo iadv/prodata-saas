@@ -15,18 +15,6 @@ export const Header = ({ handleClear }: { handleClear: () => void }) => {
         Ask questions on your data
       </h1>
       <div className="flex items-center justify-center space-x-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-        >
-          {theme === "dark" ? (
-            <Moon className="h-5 w-5" />
-          ) : (
-            <Sun className="h-5 w-5" />
-          )}
-          <span className="sr-only">Toggle theme</span>
-        </Button>
 
       </div>
     </div>

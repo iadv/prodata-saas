@@ -282,21 +282,26 @@ async function createConversationsTableIfNotExists(schemaName: string) {
 
 // Helper function to insert a message
 async function insertMessage(schemaName: string, message: any) {
-  const insertMessageQuery = `
-    INSERT INTO "${schemaName}".messages (
-      conversation_id, type, content, timestamp, table_data, chart_data, raw_query
-    )
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    RETURNING id
-  `;
-  
-  return await sql.query(insertMessageQuery, [
-    message.conversation_id,
-    message.type,
-    message.content,
-    new Date(),
-    message.tableData ? JSON.stringify(message.tableData) : null,
-    message.chartData ? JSON.stringify(message.chartData) : null,
-    message.rawQuery || null
-  ]);
+  try {
+    const insertMessageQuery = `
+      INSERT INTO "${schemaName}".messages (
+        conversation_id, type, content, timestamp, table_data, chart_data, raw_query
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING id
+    `;
+    
+    return await sql.query(insertMessageQuery, [
+      message.conversation_id,
+      message.type,
+      message.content,
+      new Date(),
+      message.tableData ? JSON.stringify(message.tableData) : null,
+      message.chartData ? JSON.stringify(message.chartData) : null,
+      message.rawQuery || null
+    ]);
+  } catch (error) {
+    console.error('Error inserting message:', error);
+    throw error; // Re-throw to be handled by the calling function
+  }
 }
