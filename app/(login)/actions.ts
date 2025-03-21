@@ -145,11 +145,14 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
 
   // **1. Create a schema specific to this user**
   const userSchema = `user_${createdUser.id}`;
-  //await db.execute(sql.raw(`CREATE SCHEMA ${userSchema};`));
-
-  // **2. Create the `library` table within the new schema**
-  await db.execute(sql.raw(`
-    CREATE TABLE ${userSchema}.library (
+ 
+  try {
+    // Step 1: Create schema
+    await db.execute(sql.raw(`CREATE SCHEMA IF NOT EXISTS "${userSchema}"`));
+    
+    // Step 2: Create library table
+    const createLibraryTableSQL = `
+      CREATE TABLE IF NOT EXISTS "${userSchema}"."library" (
         id SERIAL PRIMARY KEY,
         table_name TEXT NOT NULL,
         column_names TEXT NOT NULL,
@@ -165,21 +168,32 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
         sample_question_9 TEXT,
         sample_question_10 TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-  `));
-
-  // **3. Create the `historical` table within the new schema**
-  await db.execute(sql.raw(`
-    CREATE TABLE ${userSchema}.historical (
-      id SERIAL PRIMARY KEY,
-      prompt TEXT NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_historical_created_at 
-      ON ${sql.raw(`${userSchema}.historical`)}(created_at DESC);
-
-  `));
+      )
+    `;
+    await db.execute(sql.raw(createLibraryTableSQL));
+    
+    // Step 3: Create historical table
+    const createHistoricalTableSQL = `
+      CREATE TABLE IF NOT EXISTS "${userSchema}"."historical" (
+        id SERIAL PRIMARY KEY,
+        prompt TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+      )
+    `;
+    await db.execute(sql.raw(createHistoricalTableSQL));
+    
+    // Step 4: Create index
+    const createIndexSQL = `
+      CREATE INDEX IF NOT EXISTS idx_historical_created_at 
+      ON "${userSchema}"."historical"(created_at DESC)
+    `;
+    await db.execute(sql.raw(createIndexSQL));
+    
+  } catch (error) {
+    console.error('Error creating schema or tables:', error);
+    // Handle error appropriately, perhaps show user a message
+    throw new Error('Account creation failed. Please contact support.');
+  }
 
 
   let teamId: number;
