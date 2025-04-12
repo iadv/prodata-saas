@@ -19,7 +19,7 @@ export default function HomePage() {
               </p>
               <div className="mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0">
                 <a
-                  href="https://saas-starter-prodata-oiz6oc02y-iadvs-projects.vercel.app/sign-up"
+                  href="https://www.getprodata.com/sign-up"
                   target="_blank"
                 >
                   <Button className="bg-white hover:bg-gray-100 text-black border border-gray-200 rounded-full text-lg px-8 py-4 inline-flex items-center justify-center">
@@ -106,7 +106,7 @@ export default function HomePage() {
             </div>
             <div className="mt-8 lg:mt-0 flex justify-center lg:justify-end">
               <a
-                href="https://saas-starter-prodata-oiz6oc02y-iadvs-projects.vercel.app/sign-up"
+                href="https://www.getprodata.com/sign-up"
                 target="_blank"
               >
                 <Button className="bg-white hover:bg-gray-100 text-black border border-gray-200 rounded-full text-xl px-12 py-6 inline-flex items-center justify-center">

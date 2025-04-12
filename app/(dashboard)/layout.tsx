@@ -76,7 +76,7 @@ function Header() {
               asChild
               className="bg-black hover:bg-gray-800 text-white text-sm px-4 py-2 rounded-full"
             >
-              <Link href="/sign-up">Sign In / Sign Up</Link>
+              <Link href="/sign-in">Sign In / Sign Up</Link>
             </Button>
           )}
         </div>
