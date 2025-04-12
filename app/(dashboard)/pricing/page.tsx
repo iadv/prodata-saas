@@ -71,7 +71,7 @@ function PricingCard({
       <h2 className="text-2xl font-medium text-gray-900 mb-2">{name}</h2>
       <p className="text-sm text-gray-600 mb-4">
         with {trialDays} day risk-free trial
-        | get your money back if it's not useful
+        // get your money back if the product is not useful
       </p>
       <p className="text-4xl font-medium text-gray-900 mb-6">
         ${price / 100}{' '}
