@@ -51,37 +51,65 @@ export async function createCustomerPortalSession(team: Team) {
     redirect('/pricing');
   }
 
-  let configuration: Stripe.BillingPortal.Configuration;
+  // Get all active products
+  const products = await stripe.products.list({
+    active: true
+  });
+
+  // Create product configs for portal
+  const productConfigs = [];
+  for (const prod of products.data) {
+    const prodPrices = await stripe.prices.list({
+      product: prod.id,
+      active: true
+    });
+    
+    if (prodPrices.data.length > 0) {
+      productConfigs.push({
+        product: prod.id,
+        prices: prodPrices.data.map(price => price.id)
+      });
+    }
+  }
+
+  // Get configurations or create a new one
+  let configuration;
   const configurations = await stripe.billingPortal.configurations.list();
 
   if (configurations.data.length > 0) {
-    configuration = configurations.data[0];
-  } else {
-    const product = await stripe.products.retrieve(team.stripeProductId);
-    if (!product.active) {
-      throw new Error("Team's product is not active in Stripe");
-    }
-
-    // Use this to get all active products and prices:
-    const products = await stripe.products.list({
-      active: true
-    });
-
-    const productConfigs = [];
-    for (const prod of products.data) {
-      const prodPrices = await stripe.prices.list({
-        product: prod.id,
-        active: true
-      });
-      
-      if (prodPrices.data.length > 0) {
-        productConfigs.push({
-          product: prod.id,
-          prices: prodPrices.data.map(price => price.id)
-        });
+    // Update the existing configuration instead of just using it
+    configuration = await stripe.billingPortal.configurations.update(
+      configurations.data[0].id,
+      {
+        features: {
+          subscription_update: {
+            enabled: true,
+            default_allowed_updates: ['price', 'quantity', 'promotion_code'],
+            proration_behavior: 'create_prorations',
+            products: productConfigs
+          },
+          payment_method_update: {
+            enabled: true
+          },
+          subscription_cancel: {
+            enabled: true,
+            mode: 'at_period_end',
+            cancellation_reason: {
+              enabled: true,
+              options: [
+                'too_expensive',
+                'missing_features',
+                'switched_service',
+                'unused',
+                'other'
+              ]
+            }
+          }
+        }
       }
-    }
-
+    );
+  } else {
+    // Create a new configuration
     configuration = await stripe.billingPortal.configurations.create({
       business_profile: {
         headline: 'Manage your subscription'
