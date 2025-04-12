@@ -62,12 +62,24 @@ export async function createCustomerPortalSession(team: Team) {
       throw new Error("Team's product is not active in Stripe");
     }
 
-    const prices = await stripe.prices.list({
-      product: product.id,
+    // Use this to get all active products and prices:
+    const products = await stripe.products.list({
       active: true
     });
-    if (prices.data.length === 0) {
-      throw new Error("No active prices found for the team's product");
+
+    const productConfigs = [];
+    for (const prod of products.data) {
+      const prodPrices = await stripe.prices.list({
+        product: prod.id,
+        active: true
+      });
+      
+      if (prodPrices.data.length > 0) {
+        productConfigs.push({
+          product: prod.id,
+          prices: prodPrices.data.map(price => price.id)
+        });
+      }
     }
 
     configuration = await stripe.billingPortal.configurations.create({
@@ -79,12 +91,7 @@ export async function createCustomerPortalSession(team: Team) {
           enabled: true,
           default_allowed_updates: ['price', 'quantity', 'promotion_code'],
           proration_behavior: 'create_prorations',
-          products: [
-            {
-              product: product.id,
-              prices: prices.data.map((price) => price.id)
-            }
-          ]
+          products: productConfigs
         },
         payment_method_update: {
           enabled: true
