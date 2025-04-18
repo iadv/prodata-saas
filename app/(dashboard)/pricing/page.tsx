@@ -12,39 +12,56 @@ export default async function PricingPage() {
     getStripeProducts(),
   ]);
 
-  const basePlan = products.find((product) => product.name === 'Base Plan');
-  const plusPlan = products.find((product) => product.name === 'Pro Plan');
+  const basePlan = products.find((product) => product.name === 'Plus Plan');
+  const plusPlan = products.find((product) => product.name === 'Advantage Plan');
+  const enterprisePlan = products.find((product) => product.name === 'Enterprise Plan');
 
   const basePrice = prices.find((price) => price.productId === basePlan?.id);
   const plusPrice = prices.find((price) => price.productId === plusPlan?.id);
+  const enterprisePrice = prices.find((price) => price.productId === enterprisePlan?.id);
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="grid md:grid-cols-2 gap-8 max-w-xl mx-auto">
         <PricingCard
-          name={basePlan?.name || 'Base'}
-          price={basePrice?.unitAmount || 800}
+          name={basePlan?.name || 'Plus'}
+          price={basePrice?.unitAmount || 4900}
           interval={basePrice?.interval || 'month'}
           trialDays={basePrice?.trialPeriodDays || 30}
           features={[
             'Unlimited Queries',
-            'Upto 5 Workspace Members',
+            'Upto 5 deep research reports per month',
             'Email Support',
           ]}
           priceId={basePrice?.id}
         />
         <PricingCard
-          name={plusPlan?.name || 'Plus'}
-          price={plusPrice?.unitAmount || 5000}
+          name={plusPlan?.name || 'Advanced'}
+          price={plusPrice?.unitAmount || 9900}
           interval={plusPrice?.interval || 'month'}
           trialDays={plusPrice?.trialPeriodDays || 30}
           features={[
-            'Everything in Base, and:',
+            'Everything in Plus, and:',
+            'Upto 10 additional deep research reports per month',
+            'Access to beta features',
+            'Customization where possible',
+            'Fast Email Support + Slack Access',
+          ]}
+          priceId={plusPrice?.id}
+        />
+
+        <PricingCard
+          name={enterprisePlan?.name || 'Enterprise'}
+          price={'Contact nithin@getprodata.com'}
+          interval={enterprisePrice?.interval || 'month'}
+          trialDays={enterprisePrice?.trialPeriodDays || 30}
+          features={[
+            'Everything in Advanced, and:',
             'Custom Integrations (e.g., SAP, Tableau, Oracle)',
             'Advanced analytics and reporting',
             '24/7 Support + Slack Access',
           ]}
-          priceId={plusPrice?.id}
+          priceId={enterprisePrice?.id}
         />
       </div>
     </main>
