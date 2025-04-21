@@ -77,7 +77,7 @@ function PricingCard({
   priceId,
 }: {
   name: string;
-  price: number | string;;
+  price: number | string;
   interval: string;
   trialDays: number;
   features: string[];
