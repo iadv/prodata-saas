@@ -2,6 +2,8 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, CreditCard, Database } from 'lucide-react';
 // Remove the Terminal import since we're replacing it
 // import { Terminal } from './terminal';
+// Import the GIF directly
+// Note: Make sure presentation6.gif exists in this exact path
 
 export default function HomePage() {
   return (
@@ -32,11 +34,15 @@ export default function HomePage() {
             </div>
             <div className="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-6 lg:flex lg:items-center">
               {/* Replace the Terminal component with the GIF image */}
-              <img 
-                src="/presentation6.gif" 
-                alt="Data presentation animation" 
-                className="w-full h-auto rounded-lg shadow-xl" 
-              />
+              <div className="w-full h-auto rounded-lg shadow-xl overflow-hidden">
+                {/* Place the GIF directly in your public folder with this path structure: 
+                    public/ui/presentation6.gif */}
+                <img 
+                  src="/presentation6.gif"
+                  alt="Data presentation animation" 
+                  className="w-full h-auto" 
+                />
+              </div>
             </div>
           </div>
         </div>
