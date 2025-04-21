@@ -22,8 +22,7 @@ export default async function PricingPage() {
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Changed to grid-cols-3 for all three cards in one row */}
-      <div className="grid md:grid-cols-3 gap-6 mx-auto">
+      <div className="grid md:grid-cols-2 gap-8 max-w-xl mx-auto">
         <PricingCard
           name={basePlan?.name || 'Plus'}
           price={basePrice?.unitAmount || 4900}
@@ -50,11 +49,10 @@ export default async function PricingPage() {
           ]}
           priceId={plusPrice?.id}
         />
-        
+
         <PricingCard
           name={enterprisePlan?.name || 'Enterprise'}
-          price={'nithin@getprodata.com'}
-          contactLabel={'Contact us at'}
+          price={'Contact nithin@getprodata.com'}
           interval={enterprisePrice?.interval || 'month'}
           trialDays={enterprisePrice?.trialPeriodDays || 30}
           features={[
@@ -77,7 +75,6 @@ function PricingCard({
   trialDays,
   features,
   priceId,
-  contactLabel,
 }: {
   name: string;
   price: number | string;
@@ -85,50 +82,44 @@ function PricingCard({
   trialDays: number;
   features: string[];
   priceId?: string;
-  contactLabel?: string;
 }) {
   const formattedPrice =
-    typeof price === 'number'
-      ? `$${price / 100}`
-      : price; // use string as-is if it's not a number
+  typeof price === 'number'
+    ? `$${price / 100} `
+    : price; // use string as-is if it's not a number
 
-  return (
-    <div className="pt-6 h-full flex flex-col border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-      <h2 className="text-2xl font-medium text-gray-900 mb-2">{name}</h2>
-      <p className="text-sm text-gray-600 mb-4">
-        with {trialDays} day risk-free trial
-        {/* get your money back if the product is not useful */}
-      </p>
-      
-      {typeof price === 'number' ? (
-        <p className="text-4xl font-medium text-gray-900 mb-6">
-          {formattedPrice}{' '}
-          <span className="text-xl font-normal text-gray-600">
-            per user / {interval}
-          </span>
-        </p>
-      ) : (
-        <p className="mb-6">
-          <span className="text-sm text-gray-600">{contactLabel}</span>{' '}
-          <span className="text-lg font-medium text-gray-900">{formattedPrice}</span>
-        </p>
-      )}
-      
-      <ul className="space-y-4 mb-8 flex-grow">
-        {features.map((feature, index) => (
-          <li key={index} className="flex items-start">
-            <Check className="h-5 w-5 text-orange-500 mr-2 mt-0.5 flex-shrink-0" />
-            <span className="text-gray-700">{feature}</span>
-          </li>
-        ))}
-      </ul>
+return (
 
-      {typeof price === 'number' && priceId && (
-        <form action={checkoutAction} className="mt-auto">
-          <input type="hidden" name="priceId" value={priceId} />
-          <SubmitButton />
-        </form>
+    <div className="pt-6">
+    <h2 className="text-2xl font-medium text-gray-900 mb-2">{name}</h2>
+    <p className="text-sm text-gray-600 mb-4">
+      with {trialDays} day risk-free trial
+      {/* get your money back if the product is not useful */}
+    </p>
+    <p className="text-4xl font-medium text-gray-900 mb-6">
+      {formattedPrice}{' '}
+      {typeof price === 'number' && (
+        <span className="text-xl font-normal text-gray-600">
+          per user / {interval}
+        </span>
       )}
+    </p>
+    <ul className="space-y-4 mb-8">
+      {features.map((feature, index) => (
+        <li key={index} className="flex items-start">
+          <Check className="h-5 w-5 text-orange-500 mr-2 mt-0.5 flex-shrink-0" />
+          <span className="text-gray-700">{feature}</span>
+        </li>
+      ))}
+    </ul>
+
+    {typeof price === 'number' && priceId && (
+      <form action={checkoutAction}>
+        <input type="hidden" name="priceId" value={priceId} />
+        <SubmitButton />
+      </form>
+    )}
     </div>
   );
+
 }
