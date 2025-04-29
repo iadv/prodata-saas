@@ -519,8 +519,6 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
         // Save assistant message
         await createOrUpdateConversation(updatedAssistantMessage, false);
       }
-    } catch (error) {
-      console.error('Error processing query:', error);
       
       // Update assistant message with error
       const errorMessage: Message = {
@@ -561,6 +559,9 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
       } catch (updateError) {
         console.error('Error updating query count:', updateError);
       }
+
+    } catch (error) {
+      console.error('Error processing query:', error);
   
     } finally {
       setIsProcessing(false);
