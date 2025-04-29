@@ -95,32 +95,6 @@ export default function Page() {
       // Save the query to history
       await saveToHistory(question);
 
-      // ADD THIS BLOCK: Check subscription status first
-      const subscriptionRes = await fetch('/api/querySubscription', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ action: "check" })
-      });
-      
-      if (!subscriptionRes.ok) {
-        throw new Error('Failed to check subscription status');
-      }
-      
-      const subscriptionData = await subscriptionRes.json();
-      
-      // If user has reached limit and doesn't have active subscription, show limit message
-      if (subscriptionData.hasReachedLimit) {
-        setLoading(false);
-        setResults([{
-          message: "You have reached the 10 / 10 free queries in your free subscription. Please update your subscription to continue."
-        }] as Result[]);
-        setColumns(['message']);
-        return;
-      }
-      // END OF ADDED BLOCK
-
       // Process the selected tables - expand "All" to all available tables
       const effectiveSelectedTables = selectedTables.includes("All") 
       ? availableTables  // Use all available tables if "All" is selected
@@ -221,21 +195,6 @@ export default function Page() {
       const cols = companies.length > 0 ? Object.keys(companies[0]) : [];
       setResults(companies);
       setColumns(cols);
-      
-      // ADD THIS BLOCK: After successfully getting results (just before setLoading(false))
-      await fetch('/api/querySubscription', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          action: "update",
-          isDeepQuery: false // Set to true for complex queries if needed
-        })
-      });
-      // END OF ADDED BLOCK
-
-
       setLoading(false);
       const generation = await generateChartConfig(companies, question);
       setChartConfig(generation.config);

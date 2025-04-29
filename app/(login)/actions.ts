@@ -129,6 +129,8 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
     email,
     passwordHash,
     role: 'owner', // Default role, will be overridden if there's an invitation
+    totalQueries: 0, // Initialize counter for totalQueries
+    totalDeepQueries: 0 // Initialize counter for totalDeepQueries
   };
 
   const [createdUser] = await db.insert(users).values(newUser).returning();
