@@ -420,6 +420,19 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
           
           // Save assistant message
           await createOrUpdateConversation(updatedAssistantMessage, false);
+
+          // ADD THIS HERE: Update query counter after successful conversation
+          await fetch('/api/querySubscription', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              action: "update",
+              isDeepQuery: false
+            })
+          }).catch(err => console.error('Error updating query count:', err));
+
         } catch (conversationError) {
           console.error("Error in conversation handling:", conversationError);
           
@@ -518,7 +531,22 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
         
         // Save assistant message
         await createOrUpdateConversation(updatedAssistantMessage, false);
+
+        // ADD THIS HERE: Update query counter after successful query
+        await fetch('/api/querySubscription', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: "update",
+            isDeepQuery: false
+          })
+        }).catch(err => console.error('Error updating query count:', err));
+
       }
+    } catch (error) {
+      console.error('Error processing query:', error);
       
       // Update assistant message with error
       const errorMessage: Message = {
@@ -543,25 +571,6 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
         description: 'Failed to process your request.',
         variant: 'destructive',
       });
-
-      // After successfully processing everything and before the finally block
-      try {
-        await fetch('/api/querySubscription', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            action: "update",
-            isDeepQuery: false
-          })
-        });
-      } catch (updateError) {
-        console.error('Error updating query count:', updateError);
-      }
-
-    } catch (error) {
-      console.error('Error processing query:', error);
   
     } finally {
       setIsProcessing(false);
