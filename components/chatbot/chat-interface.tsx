@@ -278,6 +278,41 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
       return;
     }
   
+    // ADD THIS BLOCK: Check subscription status first
+    try {
+      const subscriptionRes = await fetch('/api/querySubscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: "check" })
+      });
+      
+      if (!subscriptionRes.ok) {
+        throw new Error('Failed to check subscription status');
+      }
+      
+      const subscriptionData = await subscriptionRes.json();
+      
+      // If user has reached limit and doesn't have active subscription, show limit message
+      if (subscriptionData.hasReachedLimit) {
+        // Create a fake assistant message with the subscription limit message
+        const limitMessage: Message = {
+          id: uuidv4(),
+          type: 'assistant',
+          content: "You have reached the 10 / 10 free queries in your free subscription. Please update your subscription to continue.",
+          timestamp: new Date(),
+        };
+        
+        // Add only this message to the chat
+        setMessages((prev) => [...prev, limitMessage]);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+    }
+    // END OF ADDED BLOCK
+
     // Close recent questions panel when sending a message
     setShowRecentQuestions(false);
     
@@ -510,6 +545,23 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
         description: 'Failed to process your request.',
         variant: 'destructive',
       });
+
+      // After successfully processing everything and before the finally block
+      try {
+        await fetch('/api/querySubscription', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: "update",
+            isDeepQuery: false
+          })
+        });
+      } catch (updateError) {
+        console.error('Error updating query count:', updateError);
+      }
+  
     } finally {
       setIsProcessing(false);
     }
