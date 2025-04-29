@@ -421,16 +421,20 @@ export function ChatInterface({ selectedTables }: ChatInterfaceProps) {
           // Save assistant message
           await createOrUpdateConversation(updatedAssistantMessage, false);
 
+          const updateBody = {
+            action: "update",
+            isDeepQuery: false
+          };
+          console.log("Counter update request body:", updateBody);
+          
           // ADD THIS HERE: Update query counter after successful conversation
           await fetch('/api/querySubscription', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              action: "update",
-              isDeepQuery: false
-            })
+            body: JSON.stringify(updateBody)
+            
           }).catch(err => console.error('Error updating query count:', err));
 
         } catch (conversationError) {
