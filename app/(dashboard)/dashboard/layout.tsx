@@ -34,8 +34,8 @@ export default function DashboardLayout({
 
   const mainNavItems = [
     { href: '/dashboard/upload', icon: Database, label: 'Upload Data' },
-    { href: '/dashboard/chatbot', icon: MessageSquare, label: 'AI Chat Interface' },
-    { href: '/dashboard/deepanalysis_ai', icon: Brain, label: 'Deep Analysis' },
+    { href: '/dashboard/chatbot', icon: MessageSquare, label: 'AI Chat Interface (Beta)' },
+    { href: '/dashboard/deepanalysis_ai', icon: Brain, label: 'Deep Analysis (Beta)' },
   ];
 
   const additionalInterfaces = [
