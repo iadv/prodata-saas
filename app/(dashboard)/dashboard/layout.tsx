@@ -4,7 +4,16 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Users, Settings, Shield, Activity, Menu, MessageSquare, Database, BarChart } from 'lucide-react';
+import { Users, Settings, Shield, Activity, Menu, MessageSquare, Database, BarChart, Brain, ChevronDown, ChevronRight } from 'lucide-react';
+
+interface NavGroup {
+  label: string;
+  items: {
+    href: string;
+    icon: any;
+    label: string;
+  }[];
+}
 
 export default function DashboardLayout({
   children,
@@ -13,17 +22,40 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>(['main']);
 
-  const navItems = [
+  const toggleGroup = (group: string) => {
+    setExpandedGroups(prev => 
+      prev.includes(group) 
+        ? prev.filter(g => g !== group)
+        : [...prev, group]
+    );
+  };
 
-    { href: '/dashboard/upload', icon: Database, label: 'Upload data' },
-    { href: '/dashboard/vercelchat', icon: BarChart, label: 'Data Analysis (Beta)' },
-    { href: '/dashboard/chatbot', icon: MessageSquare, label: 'AI Chat Interface (Beta)' },
-    { href: '/dashboard/general', icon: Settings, label: 'General' },
-    { href: '/dashboard', icon: Users, label: 'Team' },
-    { href: '/dashboard/security', icon: Shield, label: 'Security' },
-    { href: '/dashboard/activity', icon: Activity, label: 'Activity' },
-
+  const navGroups: NavGroup[] = [
+    {
+      label: 'main',
+      items: [
+        { href: '/dashboard/upload', icon: Database, label: 'Upload data' },
+        { href: '/dashboard/chatbot', icon: MessageSquare, label: 'AI Chat Interface' },
+        { href: '/dashboard/deepanalysis_ai', icon: Brain, label: 'Deep Analysis' },
+      ]
+    },
+    {
+      label: 'Additional Interfaces',
+      items: [
+        { href: '/dashboard/vercelchat', icon: BarChart, label: 'Data Analysis (Beta)' },
+      ]
+    },
+    {
+      label: 'Settings',
+      items: [
+        { href: '/dashboard/general', icon: Settings, label: 'General' },
+        { href: '/dashboard', icon: Users, label: 'Team' },
+        { href: '/dashboard/security', icon: Shield, label: 'Security' },
+        { href: '/dashboard/activity', icon: Activity, label: 'Activity' },
+      ]
+    }
   ];
 
   return (
@@ -53,19 +85,39 @@ export default function DashboardLayout({
           }`}
         >
           <nav className="h-full overflow-y-auto p-4">
-            {navItems.map((item) => (
-              <Link key={item.href} href={item.href} passHref>
-                <Button
-                  variant={pathname === item.href ? 'secondary' : 'ghost'}
-                  className={`shadow-none my-1 w-full justify-start ${
-                    pathname === item.href ? 'bg-gray-100' : ''
-                  }`}
-                  onClick={() => setIsSidebarOpen(false)}
-                >
-                  <item.icon className="mr-2 h-4 w-4" />
-                  {item.label}
-                </Button>
-              </Link>
+            {navGroups.map((group) => (
+              <div key={group.label} className="mb-4">
+                {group.label !== 'main' && (
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-between mb-1 font-medium text-gray-500"
+                    onClick={() => toggleGroup(group.label)}
+                  >
+                    {group.label}
+                    {expandedGroups.includes(group.label) ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </Button>
+                )}
+                <div className={group.label !== 'main' && !expandedGroups.includes(group.label) ? 'hidden' : ''}>
+                  {group.items.map((item) => (
+                    <Link key={item.href} href={item.href} passHref>
+                      <Button
+                        variant={pathname === item.href ? 'secondary' : 'ghost'}
+                        className={`shadow-none my-1 w-full justify-start ${
+                          pathname === item.href ? 'bg-gray-100' : ''
+                        }`}
+                        onClick={() => setIsSidebarOpen(false)}
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {item.label}
+                      </Button>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             ))}
           </nav>
         </aside>

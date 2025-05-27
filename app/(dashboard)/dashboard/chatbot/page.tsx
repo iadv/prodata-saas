@@ -19,14 +19,18 @@ export default function ChatbotPage() {
         }
         const data = await res.json();
         
-        // Filter out the "library" and "historical" tables
-        const filteredTables = data.filter((table: string) => 
-          table !== "library" && table !== "historical" && table !== "chatbot_historical" && table !== "messages" && table !== "conversations"
+        // Filter out the system tables
+        const filteredTables = data.tables.filter((table: string) => 
+          table !== "library" && 
+          table !== "historical" && 
+          table !== "chatbot_historical" && 
+          table !== "messages" && 
+          table !== "conversations"
         );
 
         setAvailableTables(filteredTables);
-        // Default to "All" if tables exist
-        setSelectedTables(filteredTables.length > 0 ? ["All"] : []);
+        // Default to first table if tables exist
+        setSelectedTables(filteredTables.length > 0 ? [filteredTables[0]] : []);
       } catch (error) {
         console.error("Error fetching tables:", error);
       }

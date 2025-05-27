@@ -32,8 +32,8 @@ export async function GET(request: NextRequest) {
     // Extract table names from the query result
     const tableNames = rows.map((row) => row.table_name);
 
-    // Respond with the list of table names
-    return NextResponse.json(tableNames);
+    // Return the tables array in the expected format
+    return NextResponse.json({ tables: tableNames });
   } catch (error) {
     console.error("Error fetching tables:", error);
     return NextResponse.json(

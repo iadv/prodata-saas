@@ -16,12 +16,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    
-    <body className={`${GeistMono.className} ${GeistSans.className}`}>
+    <div className={`${GeistMono.className} ${GeistSans.className}`}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         {children}
       </ThemeProvider>
-    </body>
-    
+    </div>
   );
 }

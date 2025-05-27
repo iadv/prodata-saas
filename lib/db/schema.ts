@@ -5,6 +5,11 @@ import {
   text,
   timestamp,
   integer,
+  uuid,
+  boolean,
+  pgEnum,
+  uniqueIndex,
+  json,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -71,6 +76,14 @@ export const invitations = pgTable('invitations', {
   status: varchar('status', { length: 20 }).notNull().default('pending'),
 });
 
+export const reportHistory = pgTable('report_history', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  prompt: text('prompt').notNull(),
+  reportContent: text('report_content').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 export const teamsRelations = relations(teams, ({ many }) => ({
   teamMembers: many(teamMembers),
   activityLogs: many(activityLogs),
@@ -80,6 +93,7 @@ export const teamsRelations = relations(teams, ({ many }) => ({
 export const usersRelations = relations(users, ({ many }) => ({
   teamMembers: many(teamMembers),
   invitationsSent: many(invitations),
+  reports: many(reportHistory),
 }));
 
 export const invitationsRelations = relations(invitations, ({ one }) => ({
@@ -115,6 +129,13 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   }),
 }));
 
+export const reportHistoryRelations = relations(reportHistory, ({ one }) => ({
+  user: one(users, {
+    fields: [reportHistory.userId],
+    references: [users.id],
+  }),
+}));
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Team = typeof teams.$inferSelect;
@@ -125,6 +146,8 @@ export type ActivityLog = typeof activityLogs.$inferSelect;
 export type NewActivityLog = typeof activityLogs.$inferInsert;
 export type Invitation = typeof invitations.$inferSelect;
 export type NewInvitation = typeof invitations.$inferInsert;
+export type ReportHistory = typeof reportHistory.$inferSelect;
+export type NewReportHistory = typeof reportHistory.$inferInsert;
 export type TeamDataWithMembers = Team & {
   teamMembers: (TeamMember & {
     user: Pick<User, 'id' | 'name' | 'email'>;
