@@ -43,9 +43,10 @@ export default function DashboardLayout({
   ];
 
   const settingsNavItems = [
-    { href: '/dashboard/team', icon: Users, label: 'General' },
-    { href: '/dashboard/security', icon: Shield, label: 'Security' },
-    { href: '/dashboard/activity', icon: Activity, label: 'Activity' },
+    { href: '/dashboard/settings/general', icon: Settings, label: 'General' },
+    { href: '/dashboard/settings/team', icon: Users, label: 'Subscription and Team' },
+    { href: '/dashboard/settings/security', icon: Shield, label: 'Security' },
+    { href: '/dashboard/settings/activity', icon: Activity, label: 'Activity' },
   ];
 
   const navGroups = [

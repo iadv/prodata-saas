@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, FileText, Edit } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Line, Bar } from "react-chartjs-2";
 import {
@@ -65,9 +64,6 @@ interface ReportViewerProps {
 }
 
 export default function ReportViewer_ai({ report }: ReportViewerProps) {
-  const [editMode, setEditMode] = useState(false);
-  const [editPrompt, setEditPrompt] = useState("");
-
   const handleDownloadPDF = async () => {
     try {
       const response = await fetch("/api/deepanalysis_ai/download/pdf", {
@@ -120,13 +116,6 @@ export default function ReportViewer_ai({ report }: ReportViewerProps) {
     }
   };
 
-  const handleSubmitEdit = async () => {
-    if (!editPrompt.trim()) return;
-    // Handle edit submission logic here
-    setEditMode(false);
-    setEditPrompt("");
-  };
-
   const renderChart = (chart: ChartData, index: number) => {
     try {
       const chartStyle = {
@@ -165,28 +154,11 @@ export default function ReportViewer_ai({ report }: ReportViewerProps) {
           <FileText className="mr-2 h-4 w-4" />
           Download Word
         </Button>
-        <Button
-          onClick={() => setEditMode(!editMode)}
-          variant={editMode ? "secondary" : "outline"}
-        >
+        <Button variant="outline" disabled className="opacity-50 cursor-not-allowed">
           <Edit className="mr-2 h-4 w-4" />
-          {editMode ? "Cancel Edit" : "Edit Report"}
+          Edit Report (Coming Soon)
         </Button>
       </div>
-
-      {editMode && (
-        <Card className="p-4">
-          <Textarea
-            placeholder="Describe what changes you'd like to make to the report..."
-            value={editPrompt}
-            onChange={(e) => setEditPrompt(e.target.value)}
-            className="min-h-[100px] mb-4"
-          />
-          <Button onClick={handleSubmitEdit} disabled={!editPrompt.trim()}>
-            Submit Changes
-          </Button>
-        </Card>
-      )}
 
       <div className="prose prose-lg max-w-none">
         <div className="mb-6 text-sm text-muted-foreground">
