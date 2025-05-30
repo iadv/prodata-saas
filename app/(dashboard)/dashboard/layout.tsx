@@ -38,9 +38,6 @@ export default function DashboardLayout({
     { href: '/dashboard/deepanalysis_ai', icon: Brain, label: 'Deep Analysis (Beta)' },
   ];
 
-  const additionalInterfaces = [
-    { href: '/dashboard/data-analysis', icon: BarChart, label: 'Data Analysis (Beta)' },
-  ];
 
   const settingsNavItems = [
     { href: '/dashboard/settings/general', icon: Settings, label: 'General' },
@@ -51,7 +48,6 @@ export default function DashboardLayout({
 
   const navGroups = [
     { label: 'main', items: mainNavItems },
-    { label: 'Additional Interfaces', items: additionalInterfaces },
     { label: 'Settings', items: settingsNavItems },
   ];
 
