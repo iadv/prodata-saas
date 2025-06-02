@@ -7,22 +7,44 @@ import { sql } from "@vercel/postgres";
 
 async function getTableCount() {
   try {
+    const user = await getUser();
+    if (!user) {
+      return 0;
+    }
+
+    // Define user's schema
+    const userSchema = `user_${user.id}`;
+
     const result = await sql`
       SELECT table_name 
       FROM information_schema.tables 
-      WHERE table_schema = 'public'
+      WHERE table_schema = ${userSchema}
+      AND table_type = 'BASE TABLE'
     `;
     
     // Filter out system tables (same as in TableSelector)
+    const systemTables = [
+      "library",
+      "historical",
+      "chatbot_historical",
+      "messages",
+      "conversations",
+      "users",
+      "sessions",
+      "report_history",
+      "verificationtokens",
+      "accounts",
+      "_prisma_migrations",
+      "teams",
+      "activity_logs",
+      "invitations",
+      "team_members",
+      "results_table"
+    ];
+    
     const filteredTables = result.rows
       .map(row => row.table_name)
-      .filter(table => 
-        table !== "library" && 
-        table !== "historical" && 
-        table !== "chatbot_historical" && 
-        table !== "messages" && 
-        table !== "conversations"
-      );
+      .filter(name => !systemTables.includes(name.toLowerCase()));
     
     return filteredTables.length;
   } catch (error) {
