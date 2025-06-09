@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Pool } from "pg";
+import { sql } from "@vercel/postgres";
 import { getUser } from "@/lib/db/queries";
 
-// Initialize the PostgreSQL connection pool
-const pool = new Pool({
-  connectionString: process.env.NEXT_PUBLIC_POSTGRES_URL,
-});
+interface ColumnInfo {
+  name: string;
+  type: string;
+  nullable: boolean;
+}
+
+interface TableColumns {
+  [tableName: string]: ColumnInfo[];
+}
 
 export async function POST(request: NextRequest) {
   try {
-    // Retrieve the authenticated user
+    // Authenticate user
     const user = await getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -18,60 +23,49 @@ export async function POST(request: NextRequest) {
     // Define the user's schema name dynamically
     const schemaName = `user_${user.id}`;
 
-    // Parse the request body for schemaName and tableNames
+    // Get table names from request body
     const { tableNames } = await request.json();
-
     if (!tableNames || !Array.isArray(tableNames) || tableNames.length === 0) {
       return NextResponse.json({ error: "Table names are required" }, { status: 400 });
     }
 
+    // Fetch column information for each table
+    const columnPromises = tableNames.map(async (tableName) => {
+      const result = await sql`
+        SELECT 
+          column_name,
+          data_type,
+          is_nullable
+        FROM information_schema.columns
+        WHERE table_schema = ${schemaName}
+        AND table_name = ${tableName}
+        ORDER BY ordinal_position;
+      `;
 
-    // Function to fetch context columns from the "library" table for a given user
-    const fetchContextColumns = async (tableName: string): Promise<string[]> => {
-      try {
-        // Fetch context from the 'library' table where the table_name matches the provided tableName
-        const query = `
-          SELECT context
-          FROM ${schemaName}.library
-          WHERE table_name = $1
-        `;
-        const { rows } = await pool.query(query, [tableName]);
+      return {
+        tableName,
+        columns: result.rows.map(row => ({
+          name: row.column_name,
+          type: row.data_type,
+          nullable: row.is_nullable === 'YES'
+        }))
+      };
+    });
 
-        // If rows are found, return the context values, otherwise return an empty array
-        if (rows.length > 0) {
-          return rows.map(row => row.context);
-        }
+    const results = await Promise.all(columnPromises);
 
-        // Return an empty array if no context is found for the given tableName
-        return [];
-      } catch (error) {
-        console.error(`Error fetching context columns for ${tableName}:`, error);
-        return [];
-      }
-    };
+    // Format the response
+    const response: TableColumns = results.reduce((acc, { tableName, columns }) => {
+      acc[tableName] = columns;
+      return acc;
+    }, {} as TableColumns);
 
-    // Fetch context columns for all selected tables and return them as an array
-    let allColumns: string[] = [];
-    for (const tableName of tableNames) {
-      // Skip invalid table names or "All" if it's not an actual table
-      if (tableName === "All" || !tableName) continue;
-
-      const contextColumns = await fetchContextColumns(tableName);
-      if (contextColumns.length > 0) {
-        // Prepend the table name to each context column value
-        const tableContext = contextColumns.map(
-          column => `Context for the "${tableName}" is ${column}`
-          
-        );
-        allColumns = [...allColumns, ...tableContext];
-      }
-    }
-
-    // Return the concatenated columns as an array
-    return NextResponse.json({ columns: allColumns });
-
+    return NextResponse.json(response);
   } catch (error) {
-    console.error("Error fetching context columns:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("Error fetching column information:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch column information" },
+      { status: 500 }
+    );
   }
 }

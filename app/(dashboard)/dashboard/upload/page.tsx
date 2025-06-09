@@ -130,7 +130,7 @@ export default function UploadPage() {
       setProcessing(false);
     }
   };
-
+  
   const handleDeleteTable = async () => {
     if (!deleteTableName) return;
 
@@ -180,83 +180,83 @@ export default function UploadPage() {
               <h1 className="text-2xl font-bold mb-2">Upload Data</h1>
               <p className="text-muted-foreground">
                 Upload CSV or PDF files to create database tables for analysis
-              </p>
+            </p>
             </div>
           </div>
         </div>
-      </div>
+          </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Upload Section */}
         <Card className="p-6 border-2 hover:border-purple-100 dark:hover:border-purple-900 transition-colors">
           <div className="space-y-6">
-            <div 
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+          <div 
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                 processing ? 'opacity-50' : 'hover:border-purple-400'
+            }`}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".csv,.pdf"
+              onChange={handleFileChange}
+              className="hidden"
+              id="file-upload"
+              disabled={processing}
+            />
+            <label
+              htmlFor="file-upload"
+              className={`cursor-pointer flex flex-col items-center ${
+                processing ? 'cursor-not-allowed' : ''
               }`}
             >
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept=".csv,.pdf"
-                onChange={handleFileChange}
-                className="hidden"
-                id="file-upload"
-                disabled={processing}
-              />
-              <label
-                htmlFor="file-upload"
-                className={`cursor-pointer flex flex-col items-center ${
-                  processing ? 'cursor-not-allowed' : ''
-                }`}
-              >
                 <Upload className="h-12 w-12 text-purple-400" />
                 <span className="mt-2 text-sm text-muted-foreground">
-                  Click to upload CSV or PDF files
-                </span>
-              </label>
-            </div>
+                Click to upload CSV or PDF files
+              </span>
+            </label>
+          </div>
 
-            {files.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="font-medium">Selected Files:</h3>
-                {files.map((file, index) => (
-                  <div key={index} className="flex items-center gap-2 text-sm">
+          {files.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="font-medium">Selected Files:</h3>
+              {files.map((file, index) => (
+                <div key={index} className="flex items-center gap-2 text-sm">
                     <FileType className="h-4 w-4 text-purple-500" />
-                    <span>{file.name}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {(processing || status) && (
-              <div className="space-y-4">
-                <Progress value={progress} className="bg-purple-100" />
-                <div className="text-sm text-center space-y-2">
-                  <p className="text-purple-600 font-medium">{status}</p>
-                  <p className="text-muted-foreground">Progress: {progress}%</p>
+                  <span>{file.name}</span>
                 </div>
+              ))}
+            </div>
+          )}
+
+          {(processing || status) && (
+            <div className="space-y-4">
+                <Progress value={progress} className="bg-purple-100" />
+              <div className="text-sm text-center space-y-2">
+                  <p className="text-purple-600 font-medium">{status}</p>
+                <p className="text-muted-foreground">Progress: {progress}%</p>
               </div>
-            )}
+            </div>
+          )}
 
             <Alert variant="default" className="bg-purple-50 dark:bg-purple-900/20">
               <AlertCircle className="h-4 w-4 text-purple-500" />
-              <span className="ml-2">
-                Make sure your CSV files have consistent headers and data types.
-                PDF files will be processed for tabular data.
-              </span>
-            </Alert>
+            <span className="ml-2">
+              Make sure your CSV files have consistent headers and data types.
+              PDF files will be processed for tabular data.
+            </span>
+          </Alert>
 
-            <Button
-              onClick={handleUpload}
-              disabled={processing || files.length === 0}
+          <Button
+            onClick={handleUpload}
+            disabled={processing || files.length === 0}
               className="w-full bg-purple-600 hover:bg-purple-700"
-            >
-              {processing ? "Processing..." : "Process Files"}
-            </Button>
-          </div>
-        </Card>
+          >
+            {processing ? "Processing..." : "Process Files"}
+          </Button>
+        </div>
+      </Card>
 
         {/* Tables Section */}
         <Card className="p-6 border-2 hover:border-purple-100 dark:hover:border-purple-900 transition-colors">

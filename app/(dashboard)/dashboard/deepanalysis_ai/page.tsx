@@ -38,6 +38,42 @@ export default function DeepAnalysis() {
 
     setIsGenerating(true);
     try {
+      // First, fetch sample data for the selected tables
+      const topRowsResponse = await fetch("/api/fetchTopRows", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tables: selectedTables,
+          limit: 5
+        }),
+      });
+
+      if (!topRowsResponse.ok) {
+        throw new Error("Failed to fetch sample data");
+      }
+
+      const { rows: sampleData } = await topRowsResponse.json();
+
+      // Then, fetch column information for the selected tables
+      const contextResponse = await fetch("/api/contextfetch", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tableNames: selectedTables
+        }),
+      });
+
+      if (!contextResponse.ok) {
+        throw new Error("Failed to fetch table context");
+      }
+
+      const tableContext = await contextResponse.json();
+
+      // Now make the report generation request with the additional context
       const response = await fetch("/api/deepanalysis_ai/generate", {
         method: "POST",
         headers: {
@@ -47,17 +83,26 @@ export default function DeepAnalysis() {
           tables: selectedTables,
           prompt,
           reportStyle,
+          tableContext: JSON.stringify(tableContext),
+          sampleData: JSON.stringify(sampleData)
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to generate report");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to generate report: ${errorText}`);
+      }
       
       const data = await response.json();
+      if (!data.content) {
+        throw new Error("Generated report is empty");
+      }
       setReport(data);
     } catch (error) {
+      console.error("Report generation error:", error);
       toast({
         title: "Error",
-        description: "Failed to generate report. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to generate report. Please try again.",
         variant: "destructive",
       });
     } finally {
