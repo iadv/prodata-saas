@@ -3,41 +3,26 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import Papa from 'papaparse';
 import { neon } from '@neondatabase/serverless';
-import dotenv from 'dotenv';
+// const sql = neon(process.env.NEXT_PUBLIC_POSTGRES_URL_NON_POOLING!);
+
 import { getSession } from '@/lib/auth/session';
 import { getUser } from '@/lib/db/queries';
-// for the library table to work. Imports are below
-import fs from "fs";
-import csvParser from "csv-parser";
-import { Pool } from "pg";
-// import { generateContext, generateSampleQuestions } from "@/app/(dashboard)/dashboard/upload/actions";
 import { openai } from "@ai-sdk/openai";
-// import { sql } from "@vercel/postgres";
 import { generateObject } from "ai";
 import { z } from "zod";
-// import { Configuration, OpenAIApi } from "openai";
 import { Config, configSchema, explanationsSchema, Result } from "@/lib/types";
-import { generateContext } from '@/app/(dashboard)/dashboard/vercelchat/actions';
-import { generateSampleQuestions } from '@/app/(dashboard)/dashboard/vercelchat/actions';
-import { generateSampleQuestions_mobile } from '@/app/(dashboard)/dashboard/vercelchat/actions';
-
-// Initialize OpenAI API
-// const configuration = new Configuration({
- // apiKey: process.env.OPENAI_API_KEY,
-// });
-// const openai = new OpenAIApi(configuration);
+import { generateContext, generateSampleQuestions, generateSampleQuestions_mobile } from '@/app/(dashboard)/dashboard/vercelchat/actions';
 
 
-//import { getSession } from './auth/session'; // Adjust the import path as needed
-
-dotenv.config();
-
-if (!process.env.NEXT_PUBLIC_POSTGRES_URL_NON_POOLING) {
-  throw new Error('Database connection URL is not configured');
+function getSql() {
+  if (!process.env.NEXT_PUBLIC_POSTGRES_URL_NON_POOLING) {
+    throw new Error('Database connection URL is not configured');
+  }
+  return neon(process.env.NEXT_PUBLIC_POSTGRES_URL_NON_POOLING);
 }
 
-const DATABASE_URL = process.env.NEXT_PUBLIC_POSTGRES_URL_NON_POOLING;
-const sql = neon(DATABASE_URL);
+// const sql = neon(DATABASE_URL); // We will replace usages of sql(...) with getSql()(...)
+
 
 interface ColumnInfo {
   originalName: string;
@@ -87,7 +72,7 @@ async function createTableFromData(
     await createSchemaIfNotExists(schemaName);
 
     updateStatus(`Creating table: ${schemaName}.${tableName}`);
-    
+
     // Define column names and types
     const columnDefinitions = columns
       .map(col => `"${col.name}" ${col.type}${col.nullable ? '' : ' NOT NULL'}`)
@@ -100,15 +85,15 @@ async function createTableFromData(
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `;
-    
+
     // Log query and execute
     console.log('Creating table with query:', createTableQuery);
-    await sql(createTableQuery);
+    await getSql()(createTableQuery);
 
     // Insert data in batches
     const batchSize = 100;
     const totalBatches = Math.ceil(data.length / batchSize);
-    
+
     for (let i = 0; i < data.length; i += batchSize) {
       const batch = data.slice(i, i + batchSize);
       const currentBatch = Math.floor(i / batchSize) + 1;
@@ -131,7 +116,7 @@ async function createTableFromData(
       `;
 
       console.log('Inserting data with query:', insertQuery);
-      await sql(insertQuery, values);
+      await getSql()(insertQuery, values);
     }
 
     updateStatus(`Successfully processed ${schemaName}.${tableName}`);
@@ -149,7 +134,7 @@ async function createLibraryTable(schemaName: string): Promise<void> {
     FROM information_schema.tables
     WHERE table_schema = $1 AND table_name = 'library';
   `;
-  const result = await sql(checkLibraryTableQuery, [schemaName]);
+  const result = await getSql()(checkLibraryTableQuery, [schemaName]);
 
   // If the library table doesn't exist, create it
   if (result.length === 0) {
@@ -172,7 +157,7 @@ async function createLibraryTable(schemaName: string): Promise<void> {
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `;
-    await sql(createLibraryTableQuery);
+    await getSql()(createLibraryTableQuery);
   }
 }
 
@@ -187,15 +172,15 @@ async function addRowToLibraryTable(schemaName: string, tableName: string, colum
   // Generate sample questions (which returns an array of 5 questions) for web viewing
   const sampleQuestions = await generateSampleQuestions(columns);
 
-    // Generate sample questions (which returns an array of 5 questions) for mobile viewing
-    const sampleQuestions_mobile = await generateSampleQuestions_mobile(columns);
+  // Generate sample questions (which returns an array of 5 questions) for mobile viewing
+  const sampleQuestions_mobile = await generateSampleQuestions_mobile(columns);
 
   // Insert into the library table
   const insertQuery = `
     INSERT INTO "${schemaName}".library (table_name, column_names, context, sample_question_1, sample_question_2, sample_question_3, sample_question_4, sample_question_5, sample_question_6, sample_question_7, sample_question_8, sample_question_9, sample_question_10)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
   `;
-  await sql(insertQuery, [
+  await getSql()(insertQuery, [
     tableName,
     columnNames,
     context,
@@ -247,7 +232,7 @@ async function processFiles(
             .replace(/^[0-9]/, '_$&');
 
           // Extract columns and infer types
-          const columns: ColumnInfo[] = Object.keys(results.data[0]as Record<string, any>).map(header => {
+          const columns: ColumnInfo[] = Object.keys(results.data[0] as Record<string, any>).map(header => {
             const sanitizedHeader = sanitizeColumnName(header);
             const columnValues = results.data.map((row: any) => row[header]);
             const inferredType = inferColumnType(columnValues);
@@ -302,7 +287,7 @@ async function processFiles(
           console.error('Error processing file:', error);
           updateStatus(`Error processing file: ${error instanceof Error ? error.message : 'Unknown error'}`);
           reject(error);
-          
+
         }
       },
     });
@@ -315,11 +300,11 @@ async function createSchemaIfNotExists(schemaName: string): Promise<void> {
     FROM information_schema.schemata
     WHERE schema_name = $1
   `;
-  const result = await sql(checkSchemaQuery, [schemaName]);
+  const result = await getSql()(checkSchemaQuery, [schemaName]);
 
   if (result.length === 0) {
     const createSchemaQuery = `CREATE SCHEMA IF NOT EXISTS "${schemaName}"`;
-    await sql(createSchemaQuery);
+    await getSql()(createSchemaQuery);
   }
 }
 

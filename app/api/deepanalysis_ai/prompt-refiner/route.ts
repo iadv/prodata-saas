@@ -3,9 +3,7 @@ import { OpenAI } from "openai";
 import { z } from "zod";
 import { getUser } from "@/lib/db/queries";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+
 
 const requestSchema = z.object({
   reportStyle: z.string(),
@@ -103,12 +101,16 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { reportStyle, userPrompt, tableContext } = requestSchema.parse(body);
 
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
     const refinement = await openai.chat.completions.create({
       model: "gpt-4-turbo-preview",
       messages: [
-        { 
-          role: "system", 
-          content: PROMPT_REFINER.replace("{tableContext}", tableContext || "No specific table information provided") 
+        {
+          role: "system",
+          content: PROMPT_REFINER.replace("{tableContext}", tableContext || "No specific table information provided")
         },
         {
           role: "user",

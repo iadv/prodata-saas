@@ -7,9 +7,7 @@ import { getUser } from "@/lib/db/queries";
 import { Pool } from "pg";
 
 // Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+
 
 // Add connection pool configuration
 const pool = new Pool({
@@ -349,7 +347,7 @@ async function refinePrompt(reportStyle: string, userPrompt: string, tableContex
   try {
     // Import the prompt-refiner function directly instead of using fetch
     const { POST: promptRefinerHandler } = await import('../prompt-refiner/route');
-    
+
     // Create a mock request object
     const mockRequest = new Request('http://localhost/api/deepanalysis_ai/prompt-refiner', {
       method: 'POST',
@@ -409,7 +407,7 @@ async function fetchTableContext(tables: string[], schemaName: string) {
     for (const table of tables) {
       const topRows = await fetchTopRows(table, schemaName);
       const libraryContext = await fetchLibraryContext(table, schemaName);
-      
+
       // Add structured table info
       structuredInfo.push(`
 Table: ${table}
@@ -427,7 +425,7 @@ ${JSON.stringify(topRows.rows.slice(0, 2), null, 2)}
     // Combine both types of context
     contextInfo.push("=== Table Structure and Sample Data ===\n");
     contextInfo.push(structuredInfo.join('\n\n'));
-    
+
     if (libraryContexts.length > 0) {
       contextInfo.push("\n=== Additional Table Context ===\n");
       contextInfo.push(libraryContexts.join('\n\n'));
@@ -442,6 +440,10 @@ ${JSON.stringify(topRows.rows.slice(0, 2), null, 2)}
 
 // Function to generate SQL queries
 async function generateSQLQueries(prompt: string, tables: string[], schemaName: string, tableContext: string, sampleData: string) {
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
   try {
     // Parse the table context and sample data
     const parsedContext = JSON.parse(tableContext);
@@ -456,7 +458,7 @@ async function generateSQLQueries(prompt: string, tables: string[], schemaName: 
       columns.forEach((col: { name: string; type: string; nullable: boolean }) => {
         tableStructure += `  - ${col.name} (${col.type}${col.nullable ? ', nullable' : ''})\n`;
       });
-      
+
       // Add sample data
       if (parsedSampleData[tableName] && parsedSampleData[tableName].length > 0) {
         tableStructure += "Sample values:\n";
@@ -514,7 +516,7 @@ function validateAndFixQuery(query: string, schemaName: string): { isValid: bool
   try {
     // Clean and normalize the query
     let normalizedQuery = query.trim().replace(/\\s+/g, ' ');
-    
+
     // Basic validation
     if (!normalizedQuery.toLowerCase().startsWith('select')) {
       return { isValid: false, query, error: 'Query must start with SELECT' };
@@ -565,11 +567,11 @@ function validateAndFixQuery(query: string, schemaName: string): { isValid: bool
 // Function to execute SQL queries
 async function executeSQLQueries(queries: { purpose: string; query: string }[], schemaName: string) {
   const results = [];
-  
+
   for (const { purpose, query } of queries) {
     try {
       const { isValid, query: fixedQuery, error } = validateAndFixQuery(query, schemaName);
-      
+
       if (!isValid) {
         console.error(`Invalid query: ${error}`);
         results.push({
@@ -587,9 +589,9 @@ async function executeSQLQueries(queries: { purpose: string; query: string }[], 
       const result = await retryOperation(async () => {
         return await executeQuery(fixedQuery);
       });
-      
+
       console.log(`Query executed successfully. Rows returned: ${result.rows.length}`);
-      
+
       results.push({
         purpose,
         data: result.rows,
@@ -605,11 +607,15 @@ async function executeSQLQueries(queries: { purpose: string; query: string }[], 
       });
     }
   }
-  
+
   return results;
 }
 
 export async function POST(req: Request) {
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
   try {
     // Validate user authentication
     const user = await getUser();
@@ -629,7 +635,7 @@ export async function POST(req: Request) {
     // Validate request schema
     try {
       const { tables, prompt, reportStyle, tableContext, sampleData } = requestSchema.parse(body);
-      
+
       // Get schema name from the authenticated user
       const schemaName = `user_${user.id}`;
 
@@ -645,7 +651,7 @@ export async function POST(req: Request) {
       // Refine prompt if not a general report
       let refinedPrompt = prompt;
       let promptExplanation = '';
-      
+
       if (reportStyle !== 'general') {
         try {
           const refinement = await refinePrompt(reportStyle, prompt, tableContextInfo);
@@ -679,7 +685,7 @@ export async function POST(req: Request) {
       let queryResults;
       try {
         queryResults = await executeSQLQueries(sqlQueries.queries, schemaName);
-        
+
         // Check if we have any successful results
         const hasValidResults = queryResults.some(result => result.data && result.data.length > 0);
         if (!hasValidResults) {
@@ -827,10 +833,10 @@ IMPORTANT: Use the actual data from query results to create the charts. Each cha
 
         // Sanitize the content
         let sanitizedContent = finalReport.choices[0].message.content || '';
-        
+
         // Remove any ```html or ``` wrappers if present
         sanitizedContent = sanitizedContent.replace(/^\`\`\`html\n?/, '').replace(/\n?\`\`\`$/, '');
-        
+
         // Remove any "Not available" sections or empty appendices
         sanitizedContent = sanitizedContent.replace(/\([Nn]ot available\)/g, '');
         sanitizedContent = sanitizedContent.replace(/<h[1-6]>[^<]*Appendix[^<]*<\/h[1-6]>\s*<p>\s*(?:\([Nn]ot available\)|No content available)\s*<\/p>/g, '');

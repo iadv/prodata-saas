@@ -4,7 +4,8 @@ import { getStripePrices, getStripeProducts } from '@/lib/payments/stripe';
 import { SubmitButton } from './submit-button';
 
 // Prices are fresh for one hour max
-export const revalidate = 3600;
+// export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export default async function PricingPage() {
   const [prices, products] = await Promise.all([
@@ -50,7 +51,7 @@ export default async function PricingPage() {
           ]}
           priceId={plusPrice?.id}
         />
-        
+
         <PricingCard
           name={enterprisePlan?.name || 'Enterprise'}
           price={'nithin@getprodata.com'}
@@ -99,7 +100,7 @@ function PricingCard({
         with {trialDays} day risk-free trial
         {/* get your money back if the product is not useful */}
       </p>
-      
+
       {typeof price === 'number' ? (
         <p className="text-4xl font-medium text-gray-900 mb-6">
           {formattedPrice}{' '}
@@ -113,7 +114,7 @@ function PricingCard({
           <span className="text-lg font-medium text-gray-900">{formattedPrice}</span>
         </p>
       )}
-      
+
       <ul className="space-y-4 mb-8 flex-grow">
         {features.map((feature, index) => (
           <li key={index} className="flex items-start">
